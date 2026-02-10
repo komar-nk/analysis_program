@@ -1,37 +1,45 @@
-# auth_final.py
-import sys
-import os
+# get_auth_code.py
+import webbrowser
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
+import urllib.parse
 
-# Monkey patch ДО импорта ee
-if sys.version_info[0] == 3:
-    import io
 
-    sys.modules['StringIO'] = io
+class Handler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        query = urllib.parse.urlparse(self.path).query
+        params = urllib.parse.parse_qs(query)
 
-# Проверь существование файла с ключом
-key_file = 'credentials.json'
-if not os.path.exists(key_file):
-    print(f'❌ Файл {key_file} не найден')
-    # Поиск других JSON файлов
-    for f in os.listdir('.'):
-        if f.endswith('.json'):
-            print(f'Найден: {f}')
-    exit(1)
+        if 'code' in params:
+            self.code = params['code'][0]
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b"✅ Авторизация успешна! Вернись в консоль.")
+        else:
+            self.send_response(400)
+            self.end_headers()
+            self.wfile.write(b"❌ Не получилось")
 
-# Установи переменную окружения
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = os.path.abspath(key_file)
-print(f'✅ Используется файл: {os.environ["GOOGLE_APPLICATION_CREDENTIALS"]}')
+    def log_message(self, format, *args):
+        pass  # Отключаем логи
 
-# Теперь импортируем ee
-try:
-    import ee
 
-    ee.Initialize()
-    print('✅ Earth Engine успешно инициализирован!')
+# Запускаем локальный сервер
+server = HTTPServer(('localhost', 8080), Handler)
+thread = threading.Thread(target=server.serve_forever)
+thread.daemon = True
+thread.start()
 
-    # Тестовый запрос
-    test_img = ee.Image('LANDSAT/LC08/C01/T1_TOA/LC08_044034_20140318')
-    print(f'✅ Тестовый снимок: {test_img.getInfo()["id"]}')
+print("Открываю браузер...")
+webbrowser.open("длинная_ссылка_выше")
+print("После авторизации сервер получит код автоматически")
 
-except Exception as e:
-    print(f'❌ Ошибка: {e}')
+# Ждём код
+import time
+
+while not hasattr(server, 'code'):
+    time.sleep(0.1)
+
+code = server.code
+server.shutdown()
+print(f"✅ Получен код: {code}")
