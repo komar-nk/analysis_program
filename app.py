@@ -2203,8 +2203,8 @@ if __name__ == '__main__':
     print("=" * 60)
 
     app.run(
-        host='0.0.0.0',
-        port=5000,
+        host='155.212.163.108',
+        port=42069,
         debug=True,
         threaded=True,
         use_reloader=False
