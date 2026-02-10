@@ -14,27 +14,27 @@ class Handler(BaseHTTPRequestHandler):
             self.code = params['code'][0]
             self.send_response(200)
             self.end_headers()
-            self.wfile.write(b"✅ Авторизация успешна! Вернись в консоль.")
+            self.wfile.write(b"OK: Authorization successful! Return to console.")
         else:
             self.send_response(400)
             self.end_headers()
-            self.wfile.write(b"❌ Не получилось")
+            self.wfile.write(b"ERROR: Failed to get authorization code")
 
     def log_message(self, format, *args):
-        pass  # Отключаем логи
+        pass  # Disable logging
 
 
-# Запускаем локальный сервер
+# Start local server
 server = HTTPServer(('localhost', 8080), Handler)
 thread = threading.Thread(target=server.serve_forever)
 thread.daemon = True
 thread.start()
 
-print("Открываю браузер...")
-webbrowser.open("длинная_ссылка_выше")
-print("После авторизации сервер получит код автоматически")
+print("Opening browser...")
+webbrowser.open("LONG_AUTH_URL_HERE")
+print("After authorization, the server will receive the code automatically")
 
-# Ждём код
+# Wait for code
 import time
 
 while not hasattr(server, 'code'):
@@ -42,4 +42,4 @@ while not hasattr(server, 'code'):
 
 code = server.code
 server.shutdown()
-print(f"✅ Получен код: {code}")
+print(f"Success! Got code: {code}")
