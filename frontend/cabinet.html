@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Личный кабинет | Космос Мониторинг</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        main {
+            padding: 100px 40px 40px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 768px) {
+            main {
+                padding: 80px 20px 20px;
+            }
+        }
+
+        .page-header {
+            margin-bottom: 40px;
+        }
+
+        .page-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 2rem;
+            color: var(--accent-blue);
+            margin-bottom: 10px;
+        }
+
+        .page-subtitle {
+            font-size: 1.1rem;
+            color: #a0aec0;
+        }
+
+        .stars-container {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            overflow: hidden;
+            background: #000000;
+        }
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.6;
+            animation: twinkle 3s infinite alternate;
+        }
+
+        @keyframes twinkle {
+            0% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+
+        .cabinet-container {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .user-card {
+            background: var(--glass);
+            border-radius: 16px;
+            padding: 30px;
+            border: 1px solid var(--glass-border);
+            text-align: center;
+        }
+
+        .user-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, var(--accent-blue), #3a86ff);
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: white;
+        }
+
+        .user-name {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: white;
+        }
+
+        .user-login {
+            color: var(--accent-blue);
+            font-family: 'Space Grotesk', monospace;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+        }
+
+        .user-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 25px;
+            padding-top: 25px;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: #a0aec0;
+        }
+
+        .email-section {
+            background: var(--glass);
+            border-radius: 16px;
+            padding: 30px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .section-title {
+            color: var(--accent-blue);
+            font-size: 1.3rem;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #a0aec0;
+            font-size: 0.9rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            color: white;
+            font-size: 0.95rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+
+        .btn-save {
+            background: var(--accent-green);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95rem;
+        }
+
+        .btn-save:hover {
+            background: #0da371;
+            transform: translateY(-2px);
+        }
+
+        .email-list-section {
+            background: var(--glass);
+            border-radius: 16px;
+            padding: 30px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .email-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+
+        .email-item {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .email-info {
+            flex: 1;
+        }
+
+        .email-address {
+            font-weight: 600;
+            color: white;
+            margin-bottom: 5px;
+            font-size: 1rem;
+        }
+
+        .email-date {
+            font-size: 0.85rem;
+            color: #a0aec0;
+        }
+
+        .primary-badge {
+            background: rgba(74, 158, 255, 0.2);
+            color: var(--accent-blue);
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .email-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            border: none;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .btn-icon:hover {
+            background: var(--accent-red);
+        }
+
+        .btn-icon.success:hover {
+            background: var(--accent-green);
+        }
+
+        .message {
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .message.success {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid var(--accent-green);
+            color: var(--accent-green);
+            display: block;
+        }
+
+        .message.error {
+            background: rgba(255, 68, 68, 0.2);
+            border: 1px solid var(--accent-red);
+            color: var(--accent-red);
+            display: block;
+        }
+
+        .profile-info {
+            background: var(--glass);
+            border-radius: 16px;
+            padding: 30px;
+            border: 1px solid var(--glass-border);
+            margin-bottom: 30px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .info-item {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .info-label {
+            color: #a0aec0;
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-value {
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 500;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .logout-section {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .btn-logout {
+            background: rgba(255, 68, 68, 0.2);
+            border: 1px solid var(--accent-red);
+            color: var(--accent-red);
+            padding: 10px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-logout:hover {
+            background: var(--accent-red);
+            color: white;
+        }
+
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+    </style>
+</head>
+<body>
+    <div class="stars-container" id="stars"></div>
+
+    <header>
+        <div class="header-logo">
+            <i class="fas fa-satellite"></i>
+            КОСМОС МОНИТОРИНГ
+        </div>
+        <div class="header-actions">
+            <nav class="nav-menu">
+                <a href="index.html"><i class="fas fa-home"></i> Главная</a>
+                <a href="search.html"><i class="fas fa-search"></i> Поиск</a>
+                <a href="territories.html"><i class="fas fa-map-marked-alt"></i> Мои территории</a>
+                <a href="analysis.html"><i class="fas fa-chart-line"></i> Анализ</a>
+                <a href="cabinet.html" class="active"><i class="fas fa-user"></i> Личный кабинет</a>
+            </nav>
+            <div class="user-section">
+                <span class="user-info" id="userInfo"></span>
+                <button class="btn btn-outline btn-small" id="authBtn">Войти</button>
+            </div>
+            <div class="mobile-menu-btn">
+                <i class="fas fa-bars"></i>
+            </div>
+        </div>
+    </header>
+
+    <div class="auth-modal" id="authModal">
+        <div class="auth-container">
+            <button class="auth-close" id="closeAuth">&times;</button>
+            <div id="loginForm">
+                <h2 class="auth-title">Вход</h2>
+                <p class="auth-subtitle">Продолжите мониторинг территорий</p>
+                <form id="loginFormElement">
+                    <div class="form-group">
+                        <label>Логин</label>
+                        <input type="text" id="loginUsername" required placeholder="Введите ваш логин">
+                    </div>
+                    <div class="form-group">
+                        <label>Пароль</label>
+                        <input type="password" id="loginPassword" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">Войти</button>
+                </form>
+                <div class="auth-switch">
+                    Нет аккаунта? <a href="#" id="switchToRegister">Зарегистрироваться</a>
+                </div>
+            </div>
+
+            <div id="registerForm" style="display: none;">
+                <h2 class="auth-title">Регистрация</h2>
+                <p class="auth-subtitle">Начните мониторить территории уже сегодня</p>
+                <form id="registerFormElement">
+                    <div class="form-group">
+                        <label>Логин</label>
+                        <input type="text" id="registerUsername" required placeholder="Придумайте логин">
+                    </div>
+                    <div class="form-group">
+                        <label>Пароль</label>
+                        <input type="password" id="registerPassword" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Подтверждение пароля</label>
+                        <input type="password" id="registerPasswordConfirm" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">Создать аккаунт</button>
+                </form>
+                <div class="auth-switch">
+                    Уже есть аккаунт? <a href="#" id="switchToLogin">Войти</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <main>
+        <div class="page-header">
+            <h1 class="page-title">Личный кабинет</h1>
+            <p class="page-subtitle">Управление вашими данными и настройками уведомлений</p>
+        </div>
+
+        <div class="cabinet-container">
+            <div class="user-card">
+                <div class="user-avatar" id="userAvatar">
+                    <i class="fas fa-user-astronaut"></i>
+                </div>
+                <div class="user-name" id="displayName">Пользователь</div>
+                <div class="user-login" id="displayLogin">@user</div>
+
+                <div class="user-stats">
+                    <div class="stat-item">
+                        <span class="stat-value" id="territoriesCount">0</span>
+                        <span class="stat-label">Территорий</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="activeMonitoring">0</span>
+                        <span class="stat-label">Активных</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="emailCount">0</span>
+                        <span class="stat-label">Email для уведомлений</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="profile-info">
+                <h3 class="section-title">
+                    <i class="fas fa-user-circle"></i> Информация о профиле
+                </h3>
+
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fas fa-user"></i> Логин
+                        </div>
+                        <div class="info-value" id="profileUsername">—</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fas fa-calendar-plus"></i> Дата регистрации
+                        </div>
+                        <div class="info-value" id="registrationDate">—</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fas fa-envelope"></i> Основной email для уведомлений
+                        </div>
+                        <div class="info-value" id="primaryEmail">Не указан</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="email-section">
+                <h3 class="section-title">
+                    <i class="fas fa-plus-circle"></i> Добавить почту для уведомлений
+                </h3>
+
+                <div class="form-group">
+                    <label>Email для получения результатов анализа</label>
+                    <input type="email" id="notificationEmail" placeholder="example@email.com">
+                    <small style="color: #a0aec0; font-size: 0.85rem; margin-top: 5px; display: block;">
+                        На этот адрес будут приходить уведомления об обнаруженных изменениях на ваших территориях
+                    </small>
+                </div>
+
+                <button class="btn-save" onclick="addNotificationEmail()">
+                    <i class="fas fa-plus"></i> Добавить email
+                </button>
+                <div id="emailMessage" class="message"></div>
+            </div>
+
+            <div class="email-list-section">
+                <h3 class="section-title">
+                    <i class="fas fa-list"></i> Мои email для уведомлений
+                </h3>
+
+                <div class="email-list" id="emailList">
+                    <div style="text-align: center; padding: 30px; color: #a0aec0;">
+                        <i class="fas fa-envelope" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.3;"></i>
+                        <p>У вас еще нет добавленных email для уведомлений</p>
+                        <p style="font-size: 0.9rem; margin-top: 10px;">Добавьте email, чтобы получать уведомления о изменениях</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="logout-section">
+                <button class="btn-logout" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Выйти из аккаунта
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <footer>© 2026 Космос Мониторинг | Система интеллектуального анализа территорий</footer>
+
+    <script src="script.js"></script>
+    <script>
+        function pageSpecificInit() {
+            console.log('Инициализация личного кабинета...');
+
+            if (!currentUser) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            loadUserData();
+            initEmailInput();
+        }
+
+        async function loadUserData() {
+            if (!currentUser) return;
+
+            try {
+                // Пытаемся загрузить данные с сервера
+                const response = await fetch(`/api/user/info?username=${currentUser.username}`, {
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.user) {
+                        const user = data.user;
+
+                        document.getElementById('profileUsername').textContent = user.username || '—';
+                        document.getElementById('registrationDate').textContent =
+                            user.created_at ? new Date(user.created_at).toLocaleDateString('ru-RU') : '—';
+
+                        const displayName = user.username;
+                        document.getElementById('displayName').textContent = displayName;
+                        document.getElementById('displayLogin').textContent = '@' + user.username;
+
+                        // Загружаем email из базы данных
+                        await loadNotificationEmails();
+                        await updateUserStats();
+                        return;
+                    }
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки данных с сервера:', error);
+            }
+
+            // Запасной вариант - используем localStorage
+            const user = users.find(u => u.username === currentUser.username);
+            if (user) {
+                document.getElementById('profileUsername').textContent = user.username || '—';
+                document.getElementById('registrationDate').textContent =
+                    user.createdAt ? new Date(user.createdAt).toLocaleDateString('ru-RU') : '—';
+
+                const displayName = user.username;
+                document.getElementById('displayName').textContent = displayName;
+                document.getElementById('displayLogin').textContent = '@' + user.username;
+
+                loadNotificationEmails();
+                updateUserStats();
+            }
+        }
+
+        async function updateUserStats() {
+            // Обновляем статистику территорий
+            const userTerritories = savedTerritories.filter(t =>
+                t.user === currentUser.username || t.user === currentUser.login
+            );
+
+            const activeMonitoring = monitoringData.filter(m =>
+                m.status === 'active' &&
+                userTerritories.some(t => t.id === m.territoryId)
+            ).length;
+
+            try {
+                // Получаем количество email с сервера
+                const response = await fetch(`/api/user/emails?username=${currentUser.username}`, {
+                    credentials: 'include'
+                });
+
+                let emailCount = 0;
+                let primaryEmail = null;
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.emails) {
+                        emailCount = data.emails.length;
+                        primaryEmail = data.emails.find(e => e.isPrimary);
+
+                        if (primaryEmail) {
+                            document.getElementById('primaryEmail').textContent = primaryEmail.address;
+                        } else if (data.emails.length > 0) {
+                            document.getElementById('primaryEmail').textContent = data.emails[0].address;
+                        } else {
+                            document.getElementById('primaryEmail').textContent = 'Не указан';
+                        }
+                    }
+                }
+
+                document.getElementById('territoriesCount').textContent = userTerritories.length;
+                document.getElementById('activeMonitoring').textContent = activeMonitoring;
+                document.getElementById('emailCount').textContent = emailCount;
+
+            } catch (error) {
+                console.error('Ошибка получения статистики email:', error);
+                // Используем localStorage как запасной вариант
+                const user = users.find(u => u.username === currentUser.username);
+                const emailCount = user?.notificationEmails?.length || 0;
+
+                document.getElementById('territoriesCount').textContent = userTerritories.length;
+                document.getElementById('activeMonitoring').textContent = activeMonitoring;
+                document.getElementById('emailCount').textContent = emailCount;
+            }
+        }
+
+        async function loadNotificationEmails() {
+            const emailList = document.getElementById('emailList');
+
+            try {
+                // Запрашиваем email'ы с сервера
+                const response = await fetch(`/api/user/emails?username=${currentUser.username}`, {
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Не удалось загрузить email адреса');
+                }
+
+                const data = await response.json();
+
+                if (!data.success || !data.emails || data.emails.length === 0) {
+                    emailList.innerHTML = `
+                        <div style="text-align: center; padding: 30px; color: #a0aec0;">
+                            <i class="fas fa-envelope" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.3;"></i>
+                            <p>У вас еще нет добавленных email для уведомлений</p>
+                            <p style="font-size: 0.9rem; margin-top: 10px;">Добавьте email, чтобы получать уведомления о изменениях</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                let html = '';
+                data.emails.forEach((email, index) => {
+                    const isPrimary = email.isPrimary;
+                    const addedDate = new Date(email.addedAt);
+
+                    html += `
+                        <div class="email-item">
+                            <div class="email-info">
+                                <div class="email-address">
+                                    ${email.address}
+                                    ${isPrimary ? '<span class="primary-badge">Основной</span>' : ''}
+                                </div>
+                                <div class="email-date">Добавлен: ${addedDate.toLocaleDateString('ru-RU')} ${addedDate.toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'})}</div>
+                            </div>
+                            <div class="email-actions">
+                                ${!isPrimary ? `
+                                    <button class="btn-icon success" onclick="makePrimaryEmail('${email.address}')" title="Сделать основным">
+                                        <i class="fas fa-star"></i>
+                                    </button>
+                                ` : ''}
+                                <button class="btn-icon" onclick="removeNotificationEmail('${email.address}')" title="Удалить">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                emailList.innerHTML = html;
+
+            } catch (error) {
+                console.error('Ошибка загрузки email адресов:', error);
+                // Запасной вариант - используем localStorage
+                const user = users.find(u => u.username === currentUser.username);
+                const emailList = document.getElementById('emailList');
+
+                if (!user || !user.notificationEmails || user.notificationEmails.length === 0) {
+                    emailList.innerHTML = `
+                        <div style="text-align: center; padding: 30px; color: #a0aec0;">
+                            <i class="fas fa-envelope" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.3;"></i>
+                            <p>У вас еще нет добавленных email для уведомлений</p>
+                            <p style="font-size: 0.9rem; margin-top: 10px;">Добавьте email, чтобы получать уведомления о изменениях</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                let html = '';
+                user.notificationEmails.forEach((email, index) => {
+                    const isPrimary = email.isPrimary;
+                    const addedDate = new Date(email.addedAt);
+
+                    html += `
+                        <div class="email-item">
+                            <div class="email-info">
+                                <div class="email-address">
+                                    ${email.address}
+                                    ${isPrimary ? '<span class="primary-badge">Основной</span>' : ''}
+                                </div>
+                                <div class="email-date">Добавлен: ${addedDate.toLocaleDateString('ru-RU')} ${addedDate.toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'})}</div>
+                            </div>
+                            <div class="email-actions">
+                                ${!isPrimary ? `
+                                    <button class="btn-icon success" onclick="makePrimaryEmail('${email.address}')" title="Сделать основным">
+                                        <i class="fas fa-star"></i>
+                                    </button>
+                                ` : ''}
+                                <button class="btn-icon" onclick="removeNotificationEmail('${email.address}')" title="Удалить">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                emailList.innerHTML = html;
+            }
+        }
+
+        function initEmailInput() {
+            const emailInput = document.getElementById('notificationEmail');
+            if (emailInput) {
+                emailInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        addNotificationEmail();
+                    }
+                });
+            }
+        }
+
+        function addNotificationEmail() {
+            const emailInput = document.getElementById('notificationEmail');
+            const email = emailInput.value.trim();
+            const messageEl = document.getElementById('emailMessage');
+
+            messageEl.textContent = '';
+            messageEl.className = 'message';
+
+            if (!email) {
+                messageEl.textContent = 'Введите email';
+                messageEl.className = 'message error';
+                return;
+            }
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                messageEl.textContent = 'Введите корректный email';
+                messageEl.className = 'message error';
+                return;
+            }
+
+            // СОХРАНЯЕМ НА СЕРВЕРЕ
+            saveEmailToServer(email);
+        }
+
+        // Новая функция для сохранения на сервере
+        async function saveEmailToServer(email) {
+            const messageEl = document.getElementById('emailMessage');
+
+            try {
+                const response = await fetch('/api/user/save-email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        email: email,
+                        username: currentUser.username
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    messageEl.textContent = 'Email успешно сохранен!';
+                    messageEl.className = 'message success';
+
+                    // Обновляем список email
+                    await loadNotificationEmails();
+                    await updateUserStats();
+
+                    // Очищаем поле
+                    document.getElementById('notificationEmail').value = '';
+                } else {
+                    messageEl.textContent = 'Ошибка: ' + data.message;
+                    messageEl.className = 'message error';
+                }
+
+            } catch (error) {
+                console.error('Ошибка сохранения email:', error);
+                messageEl.textContent = 'Ошибка сети при сохранении email';
+                messageEl.className = 'message error';
+            }
+        }
+
+        // Функция для удаления email (использует серверный API)
+        async function removeNotificationEmail(emailAddress) {
+            if (!confirm('Вы уверены, что хотите удалить этот email?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/user/remove-email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        email: emailAddress,
+                        username: currentUser.username
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showNotification('Email удален', 'success');
+                    await loadNotificationEmails();
+                    await updateUserStats();
+                } else {
+                    showNotification('Ошибка: ' + data.message, 'error');
+                }
+            } catch (error) {
+                console.error('Ошибка удаления email:', error);
+                showNotification('Ошибка удаления email', 'error');
+            }
+        }
+
+        // Функция для установки основного email (использует серверный API)
+        async function makePrimaryEmail(emailAddress) {
+            try {
+                const response = await fetch('/api/user/set-primary-email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        email: emailAddress,
+                        username: currentUser.username
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showNotification('Основной email изменен', 'success');
+                    await loadNotificationEmails();
+                    await updateUserStats();
+                } else {
+                    showNotification('Ошибка: ' + data.message, 'error');
+                }
+            } catch (error) {
+                console.error('Ошибка изменения основного email:', error);
+                showNotification('Ошибка изменения email', 'error');
+            }
+        }
+
+        function logout() {
+            if (confirm('Вы уверены, что хотите выйти?')) {
+                currentUser = null;
+                localStorage.removeItem('currentUser');
+                window.location.href = 'index.html';
+            }
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                pageSpecificInit();
+            });
+        } else {
+            pageSpecificInit();
+        }
+    </script>
+</body>
+</html>

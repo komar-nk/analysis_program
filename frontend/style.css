@@ -1,0 +1,628 @@
+/* Основные переменные */
+:root {
+    --bg-dark: #000000;
+    --accent-blue: #4a9eff;
+    --accent-red: #ff4d4d;
+    --accent-green: #10b981;
+    --glass: rgba(20, 20, 30, 0.88);
+    --glass-light: rgba(30, 30, 45, 0.75);
+    --glass-border: rgba(255, 255, 255, 0.12);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    background: var(--bg-dark);
+    color: #ffffff;
+    font-family: 'Montserrat', sans-serif;
+    overflow-x: hidden;
+    min-height: 100vh;
+}
+
+/* Анимированные звезды на фоне */
+#stars, #stars2, #stars3 {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+}
+
+#stars {
+    background: transparent;
+    animation: animStar 150s linear infinite;
+}
+
+#stars2 {
+    background: transparent;
+    animation: animStar 100s linear infinite;
+}
+
+#stars3 {
+    background: transparent;
+    animation: animStar 50s linear infinite;
+}
+
+@keyframes animStar {
+    from { transform: translateY(0px); }
+    to { transform: translateY(-1000px); }
+}
+
+/* Шапка сайта - ОБНОВЛЕНА */
+header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 15px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 99;
+    background: rgba(0,0,0,0.3);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.header-logo {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.header-actions {
+    display: flex;
+    gap: 30px;
+    align-items: center;
+}
+
+.nav-menu {
+    display: flex;
+    gap: 20px;
+}
+
+.nav-menu a {
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+/* Личный кабинет всегда справа */
+.nav-menu a:last-child {
+    margin-left: auto;
+}
+
+.nav-menu a:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+.nav-menu a.active {
+    background: rgba(74, 158, 255, 0.2);
+    color: var(--accent-blue);
+}
+
+.user-section {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.user-info {
+    font-size: 0.85rem;
+    opacity: 0.8;
+}
+
+.mobile-menu-btn {
+    display: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--accent-blue);
+}
+
+@media (max-width: 768px) {
+    header {
+        padding: 12px 20px;
+    }
+    .header-logo {
+        font-size: 1rem;
+    }
+    .nav-menu {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: rgba(0,0,0,0.95);
+        flex-direction: column;
+        padding: 20px;
+        border-top: 1px solid rgba(255,255,255,0.1);
+    }
+    .nav-menu.active {
+        display: flex;
+    }
+    .nav-menu a:last-child {
+        margin-left: 0;
+    }
+    .mobile-menu-btn {
+        display: block;
+    }
+    .user-section {
+        display: none;
+    }
+}
+
+/* Кнопки - ОБНОВЛЕНО: кнопка добавления территории */
+.btn {
+    background: #ffffff;
+    color: #000000;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    height: auto;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255,255,255,0.2);
+}
+
+.btn-outline {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.4);
+    color: #ffffff;
+}
+
+.btn-outline:hover {
+    background: rgba(255,255,255,0.1);
+    border-color: rgba(255,255,255,0.6);
+}
+
+.btn-primary {
+    background: var(--accent-blue);
+    color: #ffffff;
+}
+
+.btn-danger {
+    background: var(--accent-red);
+    color: #ffffff;
+}
+
+.btn-success {
+    background: var(--accent-green);
+    color: #ffffff;
+}
+
+.btn-small {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    font-weight: 400;
+}
+
+.btn-medium {
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+/* Специальная кнопка "Добавить территорию" */
+.btn-add-territory {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    background: var(--accent-blue);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.3s;
+    text-decoration: none;
+    font-weight: 500;
+    height: auto;
+    line-height: normal;
+}
+
+.btn-add-territory:hover {
+    background: #3a86ff;
+    transform: translateY(-1px);
+}
+
+/* Основное содержимое */
+main {
+    padding: 120px 40px 40px;
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+@media (max-width: 768px) {
+    main {
+        padding: 100px 20px 20px;
+    }
+}
+
+/* Герой-секция */
+.hero-section {
+    min-height: calc(100vh - 120px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.hero-content {
+    max-width: 800px;
+}
+
+.logo {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: clamp(2.5rem, 5vw, 4.5rem);
+    line-height: 1.1;
+    color: #ffffff;
+    margin-bottom: 30px;
+}
+
+.hero-buttons {
+    margin-top: 40px;
+}
+
+/* Секция "Как это работает" */
+.how-it-works {
+    padding: 80px 0;
+}
+
+.section-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 2.5rem;
+    text-align: center;
+    margin-bottom: 20px;
+    color: var(--accent-blue);
+}
+
+.section-subtitle {
+    text-align: center;
+    font-size: 1.2rem;
+    color: #a0aec0;
+    margin-bottom: 60px;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 40px;
+    margin-top: 50px;
+}
+
+.step {
+    background: var(--glass);
+    padding: 40px 30px;
+    border-radius: 16px;
+    text-align: center;
+    border: 1px solid var(--glass-border);
+    transition: transform 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.step:hover {
+    transform: translateY(-10px);
+    border-color: var(--accent-blue);
+}
+
+.step-number {
+    width: 50px;
+    height: 50px;
+    background: var(--accent-blue);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: white;
+    margin: 0 auto 20px;
+}
+
+.step h3 {
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+    color: #ffffff;
+}
+
+.step p {
+    color: #a0aec0;
+    line-height: 1.6;
+}
+
+/* Тарифы УДАЛЕНЫ */
+
+/* Модальное окно авторизации */
+.auth-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(8px);
+}
+
+.auth-modal.active {
+    display: flex;
+}
+
+.auth-container {
+    background: var(--glass);
+    backdrop-filter: blur(30px);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 40px;
+    max-width: 420px;
+    width: 90%;
+    position: relative;
+    box-shadow: 0 30px 70px rgba(0,0,0,0.7);
+}
+
+.auth-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    font-size: 1.5rem;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.auth-close:hover {
+    opacity: 1;
+}
+
+.auth-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.8rem;
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.auth-subtitle {
+    text-align: center;
+    opacity: 0.7;
+    margin-bottom: 32px;
+    font-size: 0.9rem;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.85rem;
+    opacity: 0.8;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(0,0,0,0.4);
+    color: #ffffff;
+    font-size: 0.95rem;
+    transition: border-color 0.2s;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+}
+
+.error-message {
+    color: var(--accent-red);
+    font-size: 0.75rem;
+    margin-top: 6px;
+    display: none;
+}
+
+.error-message.show {
+    display: block;
+}
+
+.auth-switch {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 0.85rem;
+    opacity: 0.7;
+}
+
+.auth-switch a {
+    color: var(--accent-blue);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.auth-switch a:hover {
+    text-decoration: underline;
+}
+
+/* Футер */
+footer {
+    width: 100%;
+    text-align: center;
+    opacity: 0.4;
+    font-size: 0.75rem;
+    padding: 30px 20px 40px;
+}
+
+/* Анимации для уведомлений */
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+}
+
+/* Стили для кастомных маркеров карты */
+.custom-marker {
+    background: transparent !important;
+    border: none !important;
+}
+
+/* Анимации для кнопок мониторинга */
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(74, 158, 255, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(74, 158, 255, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(74, 158, 255, 0); }
+}
+
+.monitoring-active {
+    animation: pulse 2s infinite;
+}
+
+/* Стили для кнопок мониторинга */
+.btn-monitor {
+    background: rgba(74, 158, 255, 0.1);
+    border: 1px solid var(--accent-blue);
+    color: var(--accent-blue);
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.3s ease;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    font-weight: 500;
+}
+
+.btn-monitor:hover {
+    background: rgba(74, 158, 255, 0.2);
+    transform: translateY(-1px);
+}
+
+.btn-monitor.stop {
+    background: rgba(255, 68, 68, 0.1);
+    border-color: var(--accent-red);
+    color: var(--accent-red);
+}
+
+.btn-monitor.stop:hover {
+    background: rgba(255, 68, 68, 0.2);
+}
+
+.btn-monitor.completed {
+    background: rgba(16, 185, 129, 0.1);
+    border-color: var(--accent-green);
+    color: var(--accent-green);
+}
+
+.btn-monitor.completed:hover {
+    background: rgba(16, 185, 129, 0.2);
+}
+
+.btn-monitor.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-monitor.disabled:hover {
+    background: rgba(74, 158, 255, 0.1);
+    transform: none;
+}
+.image-container {
+    height: 250px;
+    background: linear-gradient(45deg, #0a0a0f 25%, #131320 25%, #131320 50%, #0a0a0f 50%, #0a0a0f 75%, #131320 75%, #131320);
+    background-size: 20px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.image-container.loading {
+    background: linear-gradient(90deg, #0a0a0f, #1a1a2e, #0a0a0f);
+    background-size: 200% 200%;
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.placeholder-icon {
+    font-size: 3rem;
+    color: var(--accent-blue);
+    opacity: 0.3;
+}
+
+.placeholder-text {
+    position: absolute;
+    bottom: 15px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    color: #a0aec0;
+    font-size: 0.9rem;
+    padding: 0 15px;
+}
+
+.image-card {
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--glass-border);
+    transition: all 0.3s ease;
+}
+
+.image-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--accent-blue);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);

@@ -1,3 +1,4 @@
+
 """
 Улучшенный детектор изменений с акцентом на реальные, а не сезонные изменения
 """
@@ -16,7 +17,7 @@ class ImprovedChangeDetector:
         """
         Обнаружение реальных изменений с фильтрацией сезонных эффектов
         """
-        print("\n🔍 УЛУЧШЕННОЕ ОБНАРУЖЕНИЕ РЕАЛЬНЫХ ИЗМЕНЕНИЙ")
+        print("\nУЛУЧШЕННОЕ ОБНАРУЖЕНИЕ РЕАЛЬНЫХ ИЗМЕНЕНИЙ")
 
         # Загрузка изображений
         img1 = cv2.imread(img1_path)
@@ -33,7 +34,6 @@ class ImprovedChangeDetector:
 
         print(f"Размер: {w}x{h}")
 
-        # 2. ПРЕОБРАЗОВАНИЕ В ПРОСТРАНСТВО, НЕЧУВСТВИТЕЛЬНОЕ К ОСВЕЩЕНИЮ
         print("2. Преобразование в пространство, нечувствительное к освещению...")
 
         # RGB -> HSV
@@ -74,16 +74,15 @@ class ImprovedChangeDetector:
         # Разница в текстуре (структурные изменения)
         texture_diff = cv2.absdiff(grad1_magnitude, grad2_magnitude)
 
-        # 5. АНАЛИЗ ВЕГЕТАЦИОННЫХ ИНДЕКСОВ (для леса/растительности)
+        # 5. анализ индексов (для леса/растительности)
         print("5. Анализ растительности...")
 
         # NDVI-like индекс (для спутниковых снимков RGB)
-        # В RGB: NDVI ≈ (G - R) / (G + R)
         b1, g1, r1 = cv2.split(img1.astype(np.float32))
         b2, g2, r2 = cv2.split(img2.astype(np.float32))
 
         # Простой вегетационный индекс
-        veg_index1 = (g1 - r1) / (g1 + r1 + 1e-6)  # +1e-6 чтобы избежать деления на 0
+        veg_index1 = (g1 - r1) / (g1 + r1 + 1e-6)
         veg_index2 = (g2 - r2) / (g2 + r2 + 1e-6)
 
         # Порог для зелени
@@ -93,7 +92,7 @@ class ImprovedChangeDetector:
         # Изменения в растительности
         veg_changes = np.logical_xor(veg_mask1, veg_mask2).astype(np.uint8) * 255
 
-        # 6. АНАЛИЗ ЗЕМЛЯНЫХ/СТРОИТЕЛЬНЫХ РАБОТ
+        # 6. Анализ земляных/строительных работ
         print("6. Анализ земляных изменений...")
 
         # Маска для земли (коричневые тона в HSV)
@@ -132,7 +131,7 @@ class ImprovedChangeDetector:
         all_changes = cv2.morphologyEx(all_changes, cv2.MORPH_CLOSE, kernel)
         all_changes = cv2.morphologyEx(all_changes, cv2.MORPH_OPEN, kernel)
 
-        # 8. ФИЛЬТРАЦИЯ СЕЗОННЫХ ИЗМЕНЕНИЙ
+        # 8. Фильтрация сезонных изменений
         print("8. Фильтрация сезонных изменений...")
 
         # Анализ цветовой гаммы (сезонные изменения обычно меняют всю картинку равномерно)
@@ -173,7 +172,6 @@ class ImprovedChangeDetector:
                 is_seasonal = True
                 print(f"   Обнаружены сезонные изменения (цветовая разница: {color_diff:.1f})")
 
-        # 9. РАСЧЕТ РЕЗУЛЬТАТОВ
         total_pixels = w * h
         changed_pixels = np.sum(all_changes > 0)
         change_percentage = (changed_pixels / total_pixels) * 100
@@ -208,7 +206,7 @@ class ImprovedChangeDetector:
                 significance = "отсутствуют"
                 real_change_percentage = change_percentage
 
-        print(f"\n📊 РЕЗУЛЬТАТЫ:")
+        print(f"\nРЕЗУЛЬТАТЫ:")
         print(f"   Всего пикселей: {total_pixels:,}")
         print(f"   Изменено пикселей: {changed_pixels:,}")
         print(f"   Процент изменений: {change_percentage:.2f}%")
@@ -243,7 +241,7 @@ class ImprovedChangeDetector:
 
     def _create_visualization(self, img, all_changes, veg_changes, earth_changes,
                               texture_changes, change_type, significance, is_seasonal):
-        """Создание визуализации изменений"""
+        """Создание визуализации изменений (только английский текст)"""
         h, w = img.shape[:2]
         viz = img.copy()
 
@@ -268,32 +266,48 @@ class ImprovedChangeDetector:
         cv2.drawContours(overlay, contours, -1, overlay_color, -1)
         cv2.addWeighted(overlay, 0.3, viz, 0.7, 0, viz)
 
-        # Добавляем текст
-        text = f"{change_type.upper()}: {significance}"
+        # Английские версии текста для OpenCV
+        change_type_en = {
+            "растительность": "VEGETATION",
+            "земляные работы": "EARTHWORKS",
+            "структурные": "STRUCTURAL",
+            "строительство": "CONSTRUCTION",
+            "водные": "WATER",
+            "другие": "OTHER"
+        }.get(change_type, "CHANGES")
+
+        significance_en = {
+            "значительные": "SIGNIFICANT",
+            "умеренные": "MODERATE",
+            "незначительные": "MINOR",
+            "критические": "CRITICAL"
+        }.get(significance, "UNKNOWN")
+
+        text = f"{change_type_en}: {significance_en}"
         if is_seasonal:
-            text += " (сезонные)"
+            text += " (SEASONAL)"
 
         font = cv2.FONT_HERSHEY_SIMPLEX
-        font_scale = 1.0
+        font_scale = 0.8
         thickness = 2
 
         # Фон для текста
         (text_w, text_h), baseline = cv2.getTextSize(text, font, font_scale, thickness)
-        cv2.rectangle(viz, (10, 10), (10 + text_w + 10, 10 + text_h + 20), (0, 0, 0), -1)
+        cv2.rectangle(viz, (10, 10), (10 + text_w + 20, 10 + text_h + 20), (0, 0, 0), -1)
 
-        # Текст
+        # Текст (английский)
         cv2.putText(viz, text, (20, 10 + text_h + 5), font, font_scale, (255, 255, 255), thickness)
 
-        # Легенда
+        # Легенда на английском
         legend_y = h - 150
         cv2.rectangle(viz, (10, legend_y), (300, h - 10), (0, 0, 0, 180), -1)
         cv2.rectangle(viz, (10, legend_y), (300, h - 10), (255, 255, 255), 1)
 
         legend_items = [
-            ("Растительность", (0, 255, 0)),
-            ("Земляные работы", (139, 69, 19)),
-            ("Структурные", (255, 0, 0)),
-            ("Сезонные", (255, 255, 0))
+            ("Vegetation", (0, 255, 0)),
+            ("Earthworks", (139, 69, 19)),
+            ("Structural", (255, 0, 0)),
+            ("Seasonal", (255, 255, 0))
         ]
 
         for i, (label, color) in enumerate(legend_items):
@@ -302,12 +316,12 @@ class ImprovedChangeDetector:
             cv2.putText(viz, label, (50, y + 5), font, 0.5, (255, 255, 255), 1)
 
         # Сохраняем
-        import time
-        timestamp = int(time.time())
-        filename = f"real_changes_{timestamp}.jpg"
-        cv2.imwrite(filename, viz)
+        from datetime import datetime
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"{change_type_en.lower()}_changes_{timestamp}.jpg"
 
-        print(f"📸 Визуализация сохранена: {filename}")
+        cv2.imwrite(filename, viz)
+        print(f"Визуализация сохранена: {filename}")
         return filename
 
 
@@ -316,38 +330,3 @@ def detect_changes_improved(old_image_path: str, new_image_path: str):
     """Улучшенная функция обнаружения изменений"""
     detector = ImprovedChangeDetector()
     return detector.detect_real_changes(old_image_path, new_image_path)
-
-
-# Тестирование
-if __name__ == "__main__":
-    # Пример использования
-    old_img = "test_old.jpg"
-    new_img = "test_new.jpg"
-
-    if os.path.exists(old_img) and os.path.exists(new_img):
-        results = detect_changes_improved(old_img, new_img)
-        print(f"\nРезультаты: {results}")
-    else:
-        print("Тестовые файлы не найдены")
-        print("Создаю тестовые изображения...")
-
-        # Создаем тестовые изображения
-        import numpy as np
-
-        # Старое изображение с лесом
-        old = np.zeros((500, 500, 3), dtype=np.uint8)
-        old[100:400, 100:400] = [0, 150, 0]  # Зеленый квадрат (лес)
-
-        # Новое изображение с вырубкой
-        new = np.zeros((500, 500, 3), dtype=np.uint8)
-        new[100:400, 100:400] = [0, 150, 0]  # Зеленый квадрат
-        new[200:300, 200:300] = [139, 69, 19]  # Коричневый квадрат (вырубка)
-
-        cv2.imwrite(old_img, old)
-        cv2.imwrite(new_img, new)
-
-        print(f"Созданы тестовые файлы: {old_img}, {new_img}")
-
-        # Тестируем
-        results = detect_changes_improved(old_img, new_img)
-        print(f"\nРезультаты: {results}")

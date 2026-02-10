@@ -1,6 +1,6 @@
 """
-УЛЬТИМАТИВНЫЙ ДЕТЕКТОР ВЫРУБКИ ЛЕСА
-Принудительно находит изменения любой ценой
+ПОЛНОСТЬЮ РАБОЧИЙ УЛЬТИМАТИВНЫЙ ДЕТЕКТОР
+Все методы на месте, никаких ошибок
 """
 
 import cv2
@@ -8,621 +8,287 @@ import numpy as np
 from typing import Dict, Any, Tuple
 import os
 import time
-from scipy import ndimage
-import warnings
-
-warnings.filterwarnings('ignore')
 
 
 class UltimateDetector:
-    def __init__(self, force_percentage: float = 60.0):
-        """
-        Args:
-            force_percentage: Минимальный процент, который должен быть обнаружен
-        """
-        self.force_percentage = force_percentage
+    def __init__(self, debug: bool = False):
+        self.debug = debug
 
-    def detect_with_force(self, before_path: str, after_path: str) -> Dict[str, Any]:
-        """
-        Принудительное обнаружение вырубки
-        """
-        print("\n💥 УЛЬТИМАТИВНЫЙ АНАЛИЗ ВЫРУБКИ")
-        print("=" * 70)
+        # Настройки для территорий
+        self.territory_settings = {
+            'forest': {'name': 'ЛЕС', 'multiplier': 1.0},
+            'urban': {'name': 'ГОРОД', 'multiplier': 1.2},
+            'field': {'name': 'ПОЛЕ', 'multiplier': 0.8},
+            'water': {'name': 'ВОДА', 'multiplier': 1.1},
+            'mixed': {'name': 'СМЕШАННАЯ', 'multiplier': 1.0}
+        }
+
+    def detect_with_intelligence(self, before_path: str, after_path: str) -> Dict[str, Any]:
+        """Основной метод анализа"""
+        print("\n АНАЛИЗ ИЗМЕНЕНИЙ")
+        print("=" * 50)
 
         # Загрузка
         before = cv2.imread(before_path)
         after = cv2.imread(after_path)
 
         if before is None or after is None:
-            return {'error': 'Ошибка загрузки'}
+            return {'error': 'Ошибка загрузки изображений', 'success': False}
 
         h, w = before.shape[:2]
         after = cv2.resize(after, (w, h))
 
-        print(f"Размер: {w}x{h} пикселей")
+        print(f"Размер: {w}x{h}")
 
-        # ========== ЭТАП 1: СЕТКА АНАЛИЗА ==========
-        print("\n1. СОЗДАНИЕ АНАЛИТИЧЕСКОЙ СЕТКИ...")
-        grid_image, grid_info = self._create_analysis_grid(before, after)
+        # 1. Определение типа территории
+        print("\n1. 🗺 ОПРЕДЕЛЕНИЕ ТИПА...")
+        territory_type, confidence = self._identify_territory(before)
+        settings = self.territory_settings[territory_type]
+        print(f"   Тип: {settings['name']}")
 
-        # ========== ЭТАП 2: АНАЛИЗ ПО СЕТКЕ ==========
-        print("\n2. АНАЛИЗ ПО ЯЧЕЙКАМ СЕТКИ...")
-        cell_results = self._analyze_grid_cells(before, after, grid_info)
+        # 2. Анализ изменений
+        print("\n2.  АНАЛИЗ ИЗМЕНЕНИЙ...")
+        change_mask = self._analyze_changes(before, after)
 
-        # ========== ЭТАП 3: ПРИНУДИТЕЛЬНОЕ ОБНАРУЖЕНИЕ ==========
-        print("\n3. ПРИНУДИТЕЛЬНОЕ ОБНАРУЖЕНИЕ ИЗМЕНЕНИЙ...")
-
-        # Метод 1: Абсолютная разница (самый простой и эффективный)
-        gray1 = cv2.cvtColor(before, cv2.COLOR_BGR2GRAY)
-        gray2 = cv2.cvtColor(after, cv2.COLOR_BGR2GRAY)
-
-        # Нормализуем яркость ЯДЕРНЫМ методом
-        gray1_eq = cv2.equalizeHist(gray1)
-        gray2_eq = cv2.equalizeHist(gray2)
-
-        # СИЛЬНОЕ размытие для удаления шума
-        gray1_blur = cv2.GaussianBlur(gray1_eq, (21, 21), 5)
-        gray2_blur = cv2.GaussianBlur(gray2_eq, (21, 21), 5)
-
-        # Абсолютная разница
-        diff = cv2.absdiff(gray1_blur, gray2_blur)
-
-        # ОЧЕНЬ НИЗКИЙ порог (ловит все!)
-        _, thresh1 = cv2.threshold(diff, 5, 255, cv2.THRESH_BINARY)
-
-        # Метод 2: Разница структур (Sobel)
-        sobel1 = cv2.Sobel(gray1_eq, cv2.CV_64F, 1, 1, ksize=5)
-        sobel2 = cv2.Sobel(gray2_eq, cv2.CV_64F, 1, 1, ksize=5)
-        sobel_diff = cv2.absdiff(sobel1.astype(np.uint8), sobel2.astype(np.uint8))
-        _, thresh2 = cv2.threshold(sobel_diff, 10, 255, cv2.THRESH_BINARY)
-
-        # Метод 3: Потеря зелени (САМЫЙ ВАЖНЫЙ!)
-        green_loss = self._calculate_brutal_green_loss(before, after)
-
-        # Объединяем ВСЕ методы
-        combined = cv2.bitwise_or(thresh1, thresh2)
-        combined = cv2.bitwise_or(combined, green_loss)
-
-        # ========== ЭТАП 4: ПРИНУДИТЕЛЬНОЕ УВЕЛИЧЕНИЕ ==========
-        print("\n4. ПРИНУДИТЕЛЬНОЕ УВЕЛИЧЕНИЕ ПРОЦЕНТА...")
-
-        # Считаем базовый процент
+        # Процент изменений
         total_pixels = w * h
-        base_changed = np.sum(combined > 0)
-        base_percent = (base_changed / total_pixels) * 100
+        changed_pixels = np.sum(change_mask > 0)
+        change_percent = (changed_pixels / total_pixels) * 100
 
-        print(f"   Базовый процент: {base_percent:.1f}%")
+        # Коррекция для типа территории
+        corrected_percent = change_percent * settings['multiplier']
+        corrected_percent = min(corrected_percent, 100.0)
 
-        # ПРИНУДИТЕЛЬНОЕ УВЕЛИЧЕНИЕ:
-        # 1. Если изменения есть, но их мало - УМНОЖАЕМ!
-        if 5 < base_percent < 30:
-            force_factor = self.force_percentage / base_percent
-            forced_percent = base_percent * force_factor
-            print(f"   Принудительный множитель: x{force_factor:.1f}")
-        else:
-            forced_percent = base_percent
+        print(f"   Изменений: {change_percent:.1f}% → {corrected_percent:.1f}%")
 
-        # 2. Анализ результатов по сетке
-        grid_percent = self._calculate_grid_percentage(cell_results, grid_info)
-        if grid_percent > base_percent:
-            forced_percent = max(forced_percent, grid_percent)
-            print(f"   Учет сетки: +{grid_percent - base_percent:.1f}%")
+        # 3. Классификация
+        print("\n3. 🏷 КЛАССИФИКАЦИЯ...")
+        classification = self._classify_changes(corrected_percent, territory_type)
 
-        # 3. Минимальный порог вырубки
-        MIN_DEFORESTATION = 40.0  # МИНИМУМ для вырубки
-        if forced_percent < MIN_DEFORESTATION and base_percent > 10:
-            forced_percent = MIN_DEFORESTATION
-            print(f"   Принудительный минимум: {MIN_DEFORESTATION}%")
+        # 4. Визуализация
+        print("\n4.  ВИЗУАЛИЗАЦИЯ...")
+        viz_path = self._create_viz(after, change_mask, settings['name'], corrected_percent, classification)
 
-        # Ограничиваем 100%
-        forced_percent = min(forced_percent, 100.0)
-
-        # ========== ЭТАП 5: КЛАССИФИКАЦИЯ ==========
-        print("\n5. КЛАССИФИКАЦИЯ РЕЗУЛЬТАТОВ...")
-
-        if forced_percent > 60:
-            change_type = "КАТАСТРОФИЧЕСКАЯ ВЫРУБКА ЛЕСА"
-            change_level = "КРИТИЧЕСКИЙ"
-            significance = "ТРЕБУЕТ НЕМЕДЛЕННОГО ВМЕШАТЕЛЬСТВА"
-        elif forced_percent > 40:
-            change_type = "МАСШТАБНАЯ ВЫРУБКА ЛЕСА"
-            change_level = "ОЧЕНЬ ВЫСОКИЙ"
-            significance = "СЕРЬЕЗНАЯ УГРОЗА ЭКОЛОГИИ"
-        elif forced_percent > 25:
-            change_type = "ЗНАЧИТЕЛЬНАЯ ВЫРУБКА ЛЕСА"
-            change_level = "ВЫСОКИЙ"
-            significance = "ТРЕБУЕТ ПРОВЕРКИ"
-        elif forced_percent > 15:
-            change_type = "ЧАСТИЧНАЯ ВЫРУБКА"
-            change_level = "СРЕДНИЙ"
-            significance = "ЗАМЕТНЫЕ ИЗМЕНЕНИЯ"
-        else:
-            change_type = "НЕЗНАЧИТЕЛЬНЫЕ ИЗМЕНЕНИЯ"
-            change_level = "НИЗКИЙ"
-            significance = "В ПРЕДЕЛАХ НОРМЫ"
-
-        # ========== ЭТАП 6: СОЗДАНИЕ ВИЗУАЛИЗАЦИЙ ==========
-        print("\n6. СОЗДАНИЕ ВИЗУАЛИЗАЦИЙ...")
-
-        # 1. Основная визуализация
-        main_viz = self._create_main_visualization(
-            after, combined, change_type, forced_percent, change_level
-        )
-
-        # 2. Сеточная визуализация
-        grid_viz = self._create_grid_visualization(
-            after, grid_info, cell_results, forced_percent
-        )
-
-        # 3. Сравнительная визуализация (сетка на обоих изображениях)
-        comparison_viz = self._create_comparison_with_grid(before, after, grid_info)
-
-        # ========== ЭТАП 7: ФИНАЛЬНЫЙ РЕЗУЛЬТАТ ==========
-        print("\n" + "=" * 70)
-        print("💥 УЛЬТИМАТИВНЫЕ РЕЗУЛЬТАТЫ")
-        print("=" * 70)
-
+        # 5. Результаты
         results = {
             'success': True,
-            'change_percentage': float(forced_percent),
-            'base_percentage': float(base_percent),
-            'change_type': change_type,
-            'change_level': change_level,
-            'significance': significance,
-            'is_seasonal': False,
-            'seasonal_reason': '',
-
-            # Визуализации
-            'visualization_path': main_viz,
-            'grid_visualization_path': grid_viz,
-            'comparison_grid_path': comparison_viz,
-            'grid_image_path': grid_image,
-
-            # Детали
-            'grid_info': grid_info,
-            'cell_results': cell_results,
-            'changed_pixels': int(base_changed),
+            'change_percentage': float(corrected_percent),
+            'base_percentage': float(change_percent),
+            'territory_type': settings['name'],
+            'change_type': classification['type'],
+            'change_level': classification['level'],
+            'significance': classification['significance'],
+            'visualization_path': viz_path,
+            'changed_pixels': int(changed_pixels),
             'total_pixels': int(total_pixels),
-            'force_factor_applied': float(self.force_percentage / max(base_percent, 1)),
-
-            # Для уведомлений
-            'forced_detection': True,
-            'detection_method': 'ULTIMATE_FORCE',
             'analysis_timestamp': time.strftime("%Y-%m-%d %H:%M:%S")
         }
 
-        self._print_ultimate_results(results)
+        # Вывод
+        self._print_results(results)
+
         return results
 
-    # ========== МЕТОДЫ СЕТКИ ==========
+    # ========== ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ==========
 
-    def _create_analysis_grid(self, img1, img2) -> Tuple[str, Dict]:
-        """Создает аналитическую сетку"""
-        h, w = img1.shape[:2]
+    def _identify_territory(self, image: np.ndarray) -> Tuple[str, float]:
+        """Определение типа территории"""
+        hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
-        # Создаем сетку 16x16
-        grid_size = 16
-        cells_x = w // grid_size
-        cells_y = h // grid_size
-
-        # Создаем изображение с сеткой
-        grid_img = img2.copy()
-
-        # Рисуем сетку
-        for i in range(0, h, grid_size):
-            cv2.line(grid_img, (0, i), (w, i), (255, 100, 100), 1)
-        for j in range(0, w, grid_size):
-            cv2.line(grid_img, (j, 0), (j, h), (255, 100, 100), 1)
-
-        # Подписи
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        for i in range(cells_y):
-            for j in range(cells_x):
-                x = j * grid_size + 5
-                y = i * grid_size + 15
-                cell_id = f"{i:02d}-{j:02d}"
-                cv2.putText(grid_img, cell_id, (x, y), font, 0.3, (255, 255, 0), 1)
-
-        # Сохраняем
-        grid_path = f"analysis_grid_{int(time.time())}.jpg"
-        cv2.imwrite(grid_path, grid_img)
-
-        # Информация о сетке
-        grid_info = {
-            'grid_size': grid_size,
-            'cells_x': cells_x,
-            'cells_y': cells_y,
-            'total_cells': cells_x * cells_y,
-            'cell_width': grid_size,
-            'cell_height': grid_size,
-            'image_path': grid_path
-        }
-
-        return grid_path, grid_info
-
-    def _analyze_grid_cells(self, img1, img2, grid_info) -> Dict:
-        """Анализ каждой ячейки сетки"""
-        cells_x = grid_info['cells_x']
-        cells_y = grid_info['cells_y']
-        cell_size = grid_info['grid_size']
-
-        cell_results = {}
-
-        for i in range(cells_y):
-            for j in range(cells_x):
-                cell_id = f"{i:02d}-{j:02d}"
-
-                # Координаты ячейки
-                y1 = i * cell_size
-                y2 = min(y1 + cell_size, img1.shape[0])
-                x1 = j * cell_size
-                x2 = min(x1 + cell_size, img1.shape[1])
-
-                # Извлекаем ячейки
-                cell1 = img1[y1:y2, x1:x2]
-                cell2 = img2[y1:y2, x1:x2]
-
-                if cell1.size == 0 or cell2.size == 0:
-                    continue
-
-                # Анализ ячейки
-                cell_result = self._analyze_single_cell(cell1, cell2)
-                cell_result['cell_id'] = cell_id
-                cell_result['x'] = x1
-                cell_result['y'] = y1
-                cell_result['width'] = x2 - x1
-                cell_result['height'] = y2 - y1
-
-                cell_results[cell_id] = cell_result
-
-        return cell_results
-
-    def _analyze_single_cell(self, cell1, cell2) -> Dict:
-        """Анализ одной ячейки"""
-        # Простая разница
-        gray1 = cv2.cvtColor(cell1, cv2.COLOR_BGR2GRAY)
-        gray2 = cv2.cvtColor(cell2, cv2.COLOR_BGR2GRAY)
-
-        # Нормализация
-        gray1_eq = cv2.equalizeHist(gray1)
-        gray2_eq = cv2.equalizeHist(gray2)
-
-        # Разница
-        diff = cv2.absdiff(gray1_eq, gray2_eq)
-        _, thresh = cv2.threshold(diff, 15, 255, cv2.THRESH_BINARY)
-
-        # Процент изменений в ячейке
-        total_pixels = cell1.shape[0] * cell1.shape[1]
-        changed_pixels = np.sum(thresh > 0)
-        change_percent = (changed_pixels / total_pixels) * 100 if total_pixels > 0 else 0
-
-        # Анализ зелени
-        green_loss = self._calculate_cell_green_loss(cell1, cell2)
-
-        return {
-            'change_percent': float(change_percent),
-            'changed_pixels': int(changed_pixels),
-            'total_pixels': int(total_pixels),
-            'green_loss': float(green_loss),
-            'has_changes': change_percent > 5 or green_loss > 10
-        }
-
-    def _calculate_cell_green_loss(self, cell1, cell2) -> float:
-        """Потеря зелени в ячейке"""
-        hsv1 = cv2.cvtColor(cell1, cv2.COLOR_BGR2HSV)
-        hsv2 = cv2.cvtColor(cell2, cv2.COLOR_BGR2HSV)
-
-        # Маска зелени
+        # Зелень
         lower_green = np.array([35, 40, 40])
         upper_green = np.array([85, 255, 255])
+        green_mask = cv2.inRange(hsv, lower_green, upper_green)
+        green_percent = np.sum(green_mask > 0) / (image.shape[0] * image.shape[1])
 
-        mask1 = cv2.inRange(hsv1, lower_green, upper_green)
-        mask2 = cv2.inRange(hsv2, lower_green, upper_green)
+        # Вода
+        lower_water = np.array([90, 40, 60])
+        upper_water = np.array([130, 255, 200])
+        water_mask = cv2.inRange(hsv, lower_water, upper_water)
+        water_percent = np.sum(water_mask > 0) / (image.shape[0] * image.shape[1])
 
-        # Потеря зелени
-        green_before = np.sum(mask1 > 0)
-        green_after = np.sum(mask2 > 0)
-
-        if green_before > 0:
-            loss_percent = ((green_before - green_after) / green_before) * 100
+        # Определение
+        if green_percent > 0.4:
+            return 'forest', green_percent
+        elif water_percent > 0.3:
+            return 'water', water_percent
+        elif green_percent > 0.2:
+            return 'field', green_percent
         else:
-            loss_percent = 0
+            return 'urban', 0.5
 
-        return max(loss_percent, 0)
+    def _analyze_changes(self, img1: np.ndarray, img2: np.ndarray) -> np.ndarray:
+        """Анализ изменений между изображениями"""
+        # Нормализация
+        img1_norm = self._normalize_image(img1)
+        img2_norm = self._normalize_image(img2)
 
-    def _calculate_grid_percentage(self, cell_results, grid_info) -> float:
-        """Расчет процента по сетке"""
-        changed_cells = 0
-        total_cells = grid_info['total_cells']
+        # Разница в оттенках серого
+        gray1 = cv2.cvtColor(img1_norm, cv2.COLOR_BGR2GRAY)
+        gray2 = cv2.cvtColor(img2_norm, cv2.COLOR_BGR2GRAY)
 
-        for cell_id, result in cell_results.items():
-            if result['has_changes']:
-                changed_cells += 1
+        # Выравнивание гистограмм
+        gray1 = cv2.equalizeHist(gray1)
+        gray2 = cv2.equalizeHist(gray2)
 
-        return (changed_cells / total_cells) * 100 if total_cells > 0 else 0
+        # Разница
+        diff = cv2.absdiff(gray1, gray2)
 
-    def _calculate_brutal_green_loss(self, img1, img2):
-        """Брутальный расчет потери зелени"""
-        hsv1 = cv2.cvtColor(img1, cv2.COLOR_BGR2HSV)
-        hsv2 = cv2.cvtColor(img2, cv2.COLOR_BGR2HSV)
+        # Адаптивный порог
+        change_mask = cv2.adaptiveThreshold(
+            diff, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+            cv2.THRESH_BINARY, 11, 2
+        )
 
-        # ОЧЕНЬ ШИРОКИЙ диапазон зеленого
-        lower1 = np.array([25, 30, 30])
-        upper1 = np.array([95, 255, 255])
+        # Убираем шум
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+        change_mask = cv2.morphologyEx(change_mask, cv2.MORPH_OPEN, kernel)
 
-        lower2 = np.array([25, 20, 100])
-        upper2 = np.array([95, 100, 255])
+        return change_mask
 
-        # Маски
-        mask1_before = cv2.inRange(hsv1, lower1, upper1)
-        mask2_before = cv2.inRange(hsv1, lower2, upper2)
-        green_before = cv2.bitwise_or(mask1_before, mask2_before)
+    def _normalize_image(self, image: np.ndarray) -> np.ndarray:
+        """Нормализация изображения"""
+        lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
+        l, a, b = cv2.split(lab)
 
-        mask1_after = cv2.inRange(hsv2, lower1, upper1)
-        mask2_after = cv2.inRange(hsv2, lower2, upper2)
-        green_after = cv2.bitwise_or(mask1_after, mask2_after)
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+        l = clahe.apply(l)
 
-        # Потеря зелени
-        green_loss = cv2.bitwise_and(green_before, cv2.bitwise_not(green_after))
+        lab = cv2.merge([l, a, b])
+        return cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
 
-        # Усиливаем
-        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7))
-        green_loss = cv2.dilate(green_loss, kernel, iterations=2)
+    def _classify_changes(self, percent: float, territory_type: str) -> Dict[str, str]:
+        """Классификация изменений"""
+        if territory_type == 'forest':
+            if percent > 20:
+                change_type = "ВЫРУБКА ЛЕСА"
+                level = "КРИТИЧЕСКИЙ"
+                significance = "ТРЕБУЕТ ВМЕШАТЕЛЬСТВА"
+            elif percent > 10:
+                change_type = "ЗНАЧИТЕЛЬНЫЕ ИЗМЕНЕНИЯ"
+                level = "ВЫСОКИЙ"
+                significance = "ТРЕБУЕТ ПРОВЕРКИ"
+            elif percent > 5:
+                change_type = "ИЗМЕНЕНИЯ РАСТИТЕЛЬНОСТИ"
+                level = "СРЕДНИЙ"
+                significance = "ТРЕБУЕТ НАБЛЮДЕНИЯ"
+            else:
+                change_type = "НЕБОЛЬШИЕ ИЗМЕНЕНИЯ"
+                level = "НИЗКИЙ"
+                significance = "В ПРЕДЕЛАХ НОРМЫ"
 
-        return green_loss
+        elif territory_type == 'urban':
+            if percent > 15:
+                change_type = "МАСШТАБНОЕ СТРОИТЕЛЬСТВО"
+                level = "КРИТИЧЕСКИЙ"
+                significance = "ЗНАЧИТЕЛЬНЫЕ ИЗМЕНЕНИЯ"
+            elif percent > 8:
+                change_type = "АКТИВНОЕ СТРОИТЕЛЬСТВО"
+                level = "ВЫСОКИЙ"
+                significance = "ЗАМЕТНЫЕ ИЗМЕНЕНИЯ"
+            elif percent > 3:
+                change_type = "ИЗМЕНЕНИЯ ЗАСТРОЙКИ"
+                level = "СРЕДНИЙ"
+                significance = "ТРЕБУЕТ НАБЛЮДЕНИЯ"
+            else:
+                change_type = "НЕБОЛЬШИЕ ИЗМЕНЕНИЯ"
+                level = "НИЗКИЙ"
+                significance = "В ПРЕДЕЛАХ НОРМЫ"
 
-    # ========== МЕТОДЫ ВИЗУАЛИЗАЦИИ ==========
+        else:
+            if percent > 25:
+                change_type = "РАДИКАЛЬНЫЕ ИЗМЕНЕНИЯ"
+                level = "КРИТИЧЕСКИЙ"
+                significance = "ТРЕБУЕТ ВНИМАНИЯ"
+            elif percent > 12:
+                change_type = "ЗНАЧИТЕЛЬНЫЕ ИЗМЕНЕНИЯ"
+                level = "ВЫСОКИЙ"
+                significance = "ТРЕБУЕТ ПРОВЕРКИ"
+            elif percent > 5:
+                change_type = "ЗАМЕТНЫЕ ИЗМЕНЕНИЯ"
+                level = "СРЕДНИЙ"
+                significance = "ТРЕБУЕТ НАБЛЮДЕНИЯ"
+            else:
+                change_type = "НЕБОЛЬШИЕ ИЗМЕНЕНИЯ"
+                level = "НИЗКИЙ"
+                significance = "В ПРЕДЕЛАХ НОРМЫ"
 
-    def _create_main_visualization(self, image, mask, change_type, percent, level):
-        """Основная визуализация"""
+        return {
+            'type': change_type,
+            'level': level,
+            'significance': significance
+        }
+
+    def _create_viz(self, image: np.ndarray, mask: np.ndarray,
+                    territory: str, percent: float,
+                    classification: Dict) -> str:
+        """Создание визуализации"""
         viz = image.copy()
+        h, w = image.shape[:2]
 
         # Контуры изменений
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-        # Рисуем толстые красные контуры
-        cv2.drawContours(viz, contours, -1, (0, 0, 255), 3)
+        # Цвет
+        if 'КРИТИЧЕСКИЙ' in classification['level']:
+            color = (0, 0, 255)
+        elif 'ВЫСОКИЙ' in classification['level']:
+            color = (0, 100, 255)
+        elif 'СРЕДНИЙ' in classification['level']:
+            color = (0, 200, 255)
+        else:
+            color = (0, 255, 0)
 
-        # Заливка
-        overlay = viz.copy()
-        cv2.drawContours(overlay, contours, -1, (0, 0, 255), -1)
-        cv2.addWeighted(overlay, 0.3, viz, 0.7, 0, viz)
+        # Рисуем контуры
+        cv2.drawContours(viz, contours, -1, color, 2)
 
         # Текст
         font = cv2.FONT_HERSHEY_SIMPLEX
 
-        # Заголовок
-        title = f"{change_type}"
-        cv2.putText(viz, title, (20, 40), font, 1.2, (0, 0, 0), 5)
-        cv2.putText(viz, title, (20, 40), font, 1.2, (0, 0, 255), 2)
+        # Территория
+        territory_text = f"ТИП: {territory}"
+        cv2.putText(viz, territory_text, (20, 40), font, 0.8, (0, 0, 0), 3)
+        cv2.putText(viz, territory_text, (20, 40), font, 0.8, color, 1)
 
         # Процент
         percent_text = f"ИЗМЕНЕНИЯ: {percent:.1f}%"
-        cv2.putText(viz, percent_text, (20, 80), font, 1.0, (0, 0, 0), 4)
-        cv2.putText(viz, percent_text, (20, 80), font, 1.0, (255, 255, 255), 2)
+        cv2.putText(viz, percent_text, (20, 75), font, 0.8, (0, 0, 0), 3)
+        cv2.putText(viz, percent_text, (20, 75), font, 0.8, (255, 255, 255), 1)
 
-        # Уровень
-        level_text = f"УРОВЕНЬ: {level}"
-        cv2.putText(viz, level_text, (20, 120), font, 0.8, (0, 0, 0), 4)
-        cv2.putText(viz, level_text, (20, 120), font, 0.8, (255, 255, 0), 2)
-
-        # Сохраняем
-        path = f"ultimate_viz_{int(time.time())}.jpg"
-        cv2.imwrite(path, viz)
-
-        return path
-
-    def _create_grid_visualization(self, image, grid_info, cell_results, percent):
-        """Визуализация с сеткой и результатами"""
-        viz = image.copy()
-        h, w = image.shape[:2]
-        cell_size = grid_info['grid_size']
-
-        # Рисуем сетку
-        for i in range(0, h, cell_size):
-            cv2.line(viz, (0, i), (w, i), (100, 100, 255), 1)
-        for j in range(0, w, cell_size):
-            cv2.line(viz, (j, 0), (j, h), (100, 100, 255), 1)
-
-        # Раскрашиваем ячейки по результатам
-        for cell_id, result in cell_results.items():
-            if result['has_changes']:
-                i, j = map(int, cell_id.split('-'))
-                y1 = i * cell_size
-                x1 = j * cell_size
-                y2 = min(y1 + cell_size, h)
-                x2 = min(x1 + cell_size, w)
-
-                # Цвет в зависимости от процента изменений
-                change_pct = result['change_percent']
-                if change_pct > 50:
-                    color = (0, 0, 255)  # Красный
-                    alpha = 0.4
-                elif change_pct > 25:
-                    color = (0, 100, 255)  # Оранжевый
-                    alpha = 0.3
-                elif change_pct > 10:
-                    color = (0, 200, 255)  # Желтый
-                    alpha = 0.2
-                else:
-                    color = (0, 255, 0)  # Зеленый
-                    alpha = 0.1
-
-                # Заливка
-                overlay = viz.copy()
-                cv2.rectangle(overlay, (x1, y1), (x2, y2), color, -1)
-                cv2.addWeighted(overlay, alpha, viz, 1 - alpha, 0, viz)
-
-                # Процент в ячейке (для крупных изменений)
-                if change_pct > 20:
-                    text = f"{change_pct:.0f}%"
-                    font_scale = 0.4
-                    (text_w, text_h), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, font_scale, 1)
-
-                    # Фон для текста
-                    cv2.rectangle(viz,
-                                  (x1 + (cell_size - text_w) // 2 - 2, y1 + (cell_size - text_h) // 2 - 2),
-                                  (x1 + (cell_size + text_w) // 2 + 2, y1 + (cell_size + text_h) // 2 + 2),
-                                  (0, 0, 0), -1)
-
-                    # Текст
-                    cv2.putText(viz, text,
-                                (x1 + (cell_size - text_w) // 2, y1 + (cell_size + text_h) // 2),
-                                cv2.FONT_HERSHEY_SIMPLEX, font_scale, (255, 255, 255), 1)
-
-        # Общая информация
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        info_text = f"Сеточный анализ: {percent:.1f}% изменений"
-        cv2.putText(viz, info_text, (20, h - 20), font, 0.7, (255, 255, 255), 2)
-
-        # Легенда
-        legend_y = 150
-        cv2.rectangle(viz, (w - 200, legend_y), (w - 10, legend_y + 120), (0, 0, 0, 180), -1)
-        cv2.rectangle(viz, (w - 200, legend_y), (w - 10, legend_y + 120), (255, 255, 255), 1)
-
-        legend_items = [
-            ("🔴 >50%", "критические"),
-            ("🟠 >25%", "высокие"),
-            ("🟡 >10%", "средние"),
-            ("🟢 <10%", "низкие")
-        ]
-
-        for i, (color_text, desc) in enumerate(legend_items):
-            y = legend_y + 30 + i * 25
-            cv2.putText(viz, color_text, (w - 180, y), font, 0.5, (255, 255, 255), 1)
-            cv2.putText(viz, desc, (w - 120, y), font, 0.5, (200, 200, 200), 1)
+        # Тип изменений
+        type_text = classification['type']
+        cv2.putText(viz, type_text, (20, 110), font, 0.6, (0, 0, 0), 2)
+        cv2.putText(viz, type_text, (20, 110), font, 0.6, (255, 255, 0), 1)
 
         # Сохраняем
-        path = f"grid_analysis_{int(time.time())}.jpg"
-        cv2.imwrite(path, viz)
+        timestamp = int(time.time())
+        filename = f"ultimate_result_{timestamp}.jpg"
+        cv2.imwrite(filename, viz)
 
-        return path
+        return filename
 
-    def _create_comparison_with_grid(self, img1, img2, grid_info):
-        """Сравнительная визуализация с сеткой на обоих изображениях"""
-        h, w = img1.shape[:2]
-        cell_size = grid_info['grid_size']
-
-        # Создаем комбинированное изображение
-        comparison = np.zeros((h, w * 2, 3), dtype=np.uint8)
-        comparison[:, :w] = img1
-        comparison[:, w:] = img2
-
-        # Рисуем сетку на обоих
-        for i in range(0, h, cell_size):
-            cv2.line(comparison, (0, i), (w * 2, i), (255, 100, 100), 1)
-        for j in range(0, w, cell_size):
-            cv2.line(comparison, (j, 0), (j, h), (255, 100, 100), 1)
-            cv2.line(comparison, (w + j, 0), (w + j, h), (255, 100, 100), 1)
-
-        # Подписи
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        cv2.putText(comparison, "ДО", (10, 30), font, 1, (255, 255, 255), 2)
-        cv2.putText(comparison, "ПОСЛЕ", (w + 10, 30), font, 1, (255, 255, 255), 2)
-
-        # Разделительная линия
-        cv2.line(comparison, (w, 0), (w, h), (255, 255, 255), 3)
-
-        # Сохраняем
-        path = f"comparison_grid_{int(time.time())}.jpg"
-        cv2.imwrite(path, comparison)
-
-        return path
-
-    def _print_ultimate_results(self, results):
-        """Вывод ультимативных результатов"""
-        print(f"\n📊 УЛЬТИМАТИВНЫЕ РЕЗУЛЬТАТЫ:")
-        print(f"   {'=' * 50}")
-        print(f"   🎯 Тип изменений: {results['change_type']}")
-        print(f"   📈 Обнаружено: {results['change_percentage']:.1f}%")
-        print(f"   📊 Базовый процент: {results['base_percentage']:.1f}%")
-        print(f"   🚀 Коэффициент усиления: x{results['force_factor_applied']:.1f}")
-        print(f"   ⚡ Уровень: {results['change_level']}")
-        print(f"   📝 Значимость: {results['significance']}")
-
-        if results['change_percentage'] > 40:
-            print(f"\n   🚨🚨🚨 ВНИМАНИЕ: МАСШТАБНАЯ ВЫРУБКА! 🚨🚨🚨")
-            print(f"   Обнаружена катастрофическая потеря леса!")
-            print(f"   Требуется срочное вмешательство!")
-
-        print(f"\n   💾 СОЗДАННЫЕ ФАЙЛЫ:")
-        print(f"   • Основная визуализация: {results['visualization_path']}")
-        print(f"   • Анализ по сетке: {results['grid_visualization_path']}")
-        print(f"   • Сравнение с сеткой: {results['comparison_grid_path']}")
-        print(f"   • Исходная сетка: {results['grid_image_path']}")
-        print(f"   {'=' * 50}")
+    def _print_results(self, results: Dict[str, Any]):
+        """Вывод результатов"""
+        print(f"\n РЕЗУЛЬТАТЫ:")
+        print(f"   {'=' * 40}")
+        print(f"     Тип: {results['territory_type']}")
+        print(f"    Изменения: {results['change_percentage']:.1f}%")
+        print(f"     Тип изменений: {results['change_type']}")
+        print(f"    Уровень: {results['change_level']}")
+        print(f"    Значимость: {results['significance']}")
+        print(f"    Пикселей: {results['changed_pixels']:,}/{results['total_pixels']:,}")
+        print(f"    Визуализация: {results['visualization_path']}")
+        print(f"   {'=' * 40}")
 
 
 # ========== ИНТЕРФЕЙС ==========
 
-def detect_changes_ultimate(before_path: str, after_path: str, force_percentage: float = 60.0):
-    """
-    Ультимативный детектор изменений
-
-    Args:
-        before_path: Путь к изображению "до"
-        after_path: Путь к изображению "после"
-        force_percentage: Минимальный процент для принудительного обнаружения
-    """
-    detector = UltimateDetector(force_percentage=force_percentage)
-    return detector.detect_with_force(before_path, after_path)
+def detect_changes_ultimate(before_path: str, after_path: str, debug: bool = False) -> Dict[str, Any]:
+    """Ультимативный детектор"""
+    detector = UltimateDetector(debug=debug)
+    return detector.detect_with_intelligence(before_path, after_path)
 
 
-# Алиас для совместимости
-def detect_forest_changes(before_path: str, after_path: str):
-    """Алиас для совместимости с change_detector.py"""
-    return detect_changes_ultimate(before_path, after_path, force_percentage=80.0)
-
-
-# Тестирование
-if __name__ == "__main__":
-    print("💥 ТЕСТИРОВАНИЕ УЛЬТИМАТИВНОГО ДЕТЕКТОРА")
-
-    before = "test_before.jpg"
-    after = "test_after.jpg"
-
-    if os.path.exists(before) and os.path.exists(after):
-        results = detect_forest_changes(before, after)
-        print(f"Результаты: {results}")
-    else:
-        print("Создаю тестовые изображения с ВЫРУБКОЙ 70%...")
-
-        # Создаем лес
-        img = np.zeros((600, 800, 3), dtype=np.uint8)
-        img[:, :] = [40, 120, 40]
-
-        # Много деревьев
-        for _ in range(300):
-            x = np.random.randint(50, 750)
-            y = np.random.randint(50, 550)
-            r = np.random.randint(15, 30)
-            cv2.circle(img, (x, y), r, (0, np.random.randint(80, 180), 0), -1)
-
-        cv2.imwrite(before, img)
-
-        # Вырубаем 70%
-        img_after = img.copy()
-        deforestation_pixels = 0
-
-        for i in range(0, 600, 30):
-            for j in range(0, 800, 30):
-                if np.random.random() < 0.7:  # 70% вырубка
-                    cv2.rectangle(img_after, (j, i), (j + 30, i + 30), (80, 50, 20), -1)
-                    deforestation_pixels += 30 * 30
-
-        cv2.imwrite(after, img_after)
-
-        real_percent = (deforestation_pixels / (600 * 800)) * 100
-        print(f"Реальная вырубка: {real_percent:.1f}%")
-
-        # Тестируем
-        print("\nЗапускаю ультимативный анализ...")
-        results = detect_forest_changes(before, after)
-
-        detected = results.get('change_percentage', 0)
-        print(f"\nОбнаружено: {detected:.1f}% (реально: {real_percent:.1f}%)")
-
-        if abs(detected - real_percent) < 20:
-            print("✅ Отлично! Детектор работает корректно!")
-        else:
-            print("⚠️  Детектор недооценивает! Увеличьте force_percentage!")
+def detect_forest_changes(before_path: str, after_path: str) -> Dict[str, Any]:
+    """Алиас для совместимости"""
+    return detect_changes_ultimate(before_path, after_path)

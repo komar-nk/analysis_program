@@ -1,6 +1,5 @@
 """
-СУПЕР-АГРЕССИВНЫЙ ДЕТЕКТОР ВЫРУБКИ ЛЕСА
-Обнаруживает даже мельчайшие изменения структуры
+ДЕТЕКТОР ВЫРУБКИ ЛЕСА
 """
 
 import cv2
@@ -9,7 +8,7 @@ from typing import Dict, Any, List, Tuple
 import os
 import time
 from scipy import ndimage
-from skimage import feature, filters, segmentation, morphology
+import skimage
 import warnings
 
 warnings.filterwarnings('ignore')
@@ -26,10 +25,10 @@ class SuperForestDetector:
 
     def detect_changes_aggressive(self, before_path: str, after_path: str) -> Dict[str, Any]:
         """
-        АГРЕССИВНОЕ обнаружение изменений (военный уровень)
+        обнаружение изменений (военный уровень)
         """
 
-        print("\n🔬 СУПЕР-АГРЕССИВНЫЙ АНАЛИЗ ВЫРУБКИ")
+        print("\n🔬 АНАЛИЗ ВЫРУБКИ")
         print("=" * 70)
 
         # Загрузка с проверкой
@@ -93,7 +92,7 @@ class SuperForestDetector:
         contrast_diff = cv2.absdiff(contrast_before, contrast_after)
 
         # ========== ЭТАП 6: ОБЪЕДИНЕНИЕ ВСЕХ ПРИЗНАКОВ ==========
-        print("6. ОБЪЕДИНЕНИЕ ПРИЗНАКОВ (агрессивное)...")
+        print("6. ОБЪЕДИНЕНИЕ ПРИЗНАКОВ")
 
         # Взвешенная сумма всех признаков
         combined = np.zeros((h, w), dtype=np.float32)
@@ -273,7 +272,7 @@ class SuperForestDetector:
 
         # ========== ЭТАП 12: ВЫВОД РЕЗУЛЬТАТОВ ==========
         print("\n" + "=" * 70)
-        print("🔥 АГРЕССИВНЫЕ РЕЗУЛЬТАТЫ АНАЛИЗА")
+        print("РЕЗУЛЬТАТЫ АНАЛИЗА")
         print("=" * 70)
 
         results = {
@@ -505,9 +504,9 @@ class SuperForestDetector:
         cv2.rectangle(viz, (10, legend_y), (400, h - 10), (255, 255, 255), 2)
 
         legend_items = [
-            ("🔴 КРАСНЫЙ - ОБЛАСТЬ ВЫРУБКИ", alert_color),
-            ("📏 ПЛОЩАДЬ - МАСШТАБ ИЗМЕНЕНИЙ", (255, 255, 255)),
-            ("🌲 ПОТЕРЯ ЗЕЛЕНИ - {:.1f}%".format(green_ratio * 100), (0, 255, 0))
+            (" КРАСНЫЙ - ОБЛАСТЬ ВЫРУБКИ", alert_color),
+            (" ПЛОЩАДЬ - МАСШТАБ ИЗМЕНЕНИЙ", (255, 255, 255)),
+            (" ПОТЕРЯ ЗЕЛЕНИ - {:.1f}%".format(green_ratio * 100), (0, 255, 0))
         ]
 
         for i, (text, color) in enumerate(legend_items):
@@ -519,22 +518,22 @@ class SuperForestDetector:
         cv2.putText(viz, "ШКАЛА СЕРЬЕЗНОСТИ:", (w - 190, 30), font, 0.5, (255, 255, 255), 1)
 
         if percentage > 40:
-            severity = "🔥 КАТАСТРОФА"
+            severity = " КАТАСТРОФИЧЕСКИЙ"
             color = (0, 0, 255)
         elif percentage > 25:
-            severity = "🚨 КРИТИЧЕСКИЙ"
+            severity = " КРИТИЧЕСКИЙ"
             color = (0, 100, 255)
         elif percentage > 15:
-            severity = "⚠️ ВЫСОКИЙ"
+            severity = "️ ВЫСОКИЙ"
             color = (0, 200, 255)
         elif percentage > 8:
-            severity = "📊 СРЕДНИЙ"
+            severity = " СРЕДНИЙ"
             color = (0, 255, 0)
         elif percentage > 3:
-            severity = "📈 НИЗКИЙ"
+            severity = " НИЗКИЙ"
             color = (200, 255, 200)
         else:
-            severity = "✅ МИНИМАЛЬНЫЙ"
+            severity = " МИНИМАЛЬНЫЙ"
             color = (200, 200, 200)
 
         cv2.putText(viz, severity, (w - 190, 60), font, 0.7, color, 2)
@@ -545,20 +544,20 @@ class SuperForestDetector:
         filename = f"SUPER_AGGRESSIVE_{timestamp}.jpg"
         cv2.imwrite(filename, viz)
 
-        print(f"🔥 Визуализация: {filename}")
+        print(f" Визуализация: {filename}")
         return filename
 
     def _print_detailed_results(self, results):
         """Детальный вывод результатов"""
-        print(f"\n📊 ДЕТАЛЬНАЯ СТАТИСТИКА:")
+        print(f"\n ДЕТАЛЬНАЯ СТАТИСТИКА:")
         print(f"   {'=' * 40}")
-        print(f"   📏 Базовый процент: {results['base_percentage']:.1f}%")
-        print(f"   🚀 Финальный процент: {results['final_percentage']:.1f}%")
-        print(f"   📈 Коэффициент усиления: x{results['enhancement_factor']:.2f}")
-        print(f"   🌲 Потеря зелени: {results['green_change_ratio'] * 100:.1f}%")
-        print(f"   🧩 Контуров изменений: {results['contours_count']}")
-        print(f"   📐 Площадь изменений: {results['changed_area_hectares']:.2f} га")
-        print(f"   🔥 Уровень серьезности: {results['change_level']}")
+        print(f"    Базовый процент: {results['base_percentage']:.1f}%")
+        print(f"    Финальный процент: {results['final_percentage']:.1f}%")
+        print(f"    Коэффициент усиления: x{results['enhancement_factor']:.2f}")
+        print(f"    Потеря зелени: {results['green_change_ratio'] * 100:.1f}%")
+        print(f"    Контуров изменений: {results['contours_count']}")
+        print(f"    Площадь изменений: {results['changed_area_hectares']:.2f} га")
+        print(f"    Уровень серьезности: {results['change_level']}")
 
         if results['final_percentage'] > 25:
             print(f"\n   🚨🚨🚨 ВНИМАНИЕ: КРИТИЧЕСКИЕ ИЗМЕНЕНИЯ! 🚨🚨🚨")
@@ -585,92 +584,3 @@ def detect_changes_super_aggressive(before_path: str, after_path: str,
     """
     detector = SuperForestDetector(sensitivity=sensitivity)
     return detector.detect_changes_aggressive(before_path, after_path)
-
-
-# ========== ТЕСТИРОВАНИЕ ==========
-
-if __name__ == "__main__":
-    print("🔥 ТЕСТИРОВАНИЕ СУПЕР-АГРЕССИВНОГО ДЕТЕКТОРА")
-    print("=" * 70)
-
-    # Тестовые изображения
-    test_before = "test_before.jpg"
-    test_after = "test_after.jpg"
-
-    if not os.path.exists(test_before) or not os.path.exists(test_after):
-        print("Создаю тестовые изображения с МАСШТАБНОЙ вырубкой...")
-
-        # Создаем изображение с густым лесом
-        img = np.zeros((800, 800, 3), dtype=np.uint8)
-        img[:, :] = [40, 120, 40]  # Зеленый фон
-
-        # Добавляем МНОГО деревьев (густой лес)
-        tree_count = 0
-        for _ in range(500):  # 500 деревьев!
-            x = np.random.randint(50, 750)
-            y = np.random.randint(50, 750)
-            radius = np.random.randint(10, 25)
-            shade = np.random.randint(80, 180)
-
-            # Крона дерева
-            cv2.circle(img, (x, y), radius, (0, shade, 0), -1)
-
-            # Ствол
-            trunk_height = radius // 2
-            cv2.rectangle(img, (x - 2, y), (x + 2, y + trunk_height),
-                          (50, 30, 10), -1)
-            tree_count += 1
-
-        cv2.imwrite(test_before, img)
-        print(f"   Создано: {test_before} ({tree_count} деревьев)")
-
-        # Создаем изображение после ВЫРУБКИ 70% леса
-        img_after = img.copy()
-
-        # Вырубаем 70% площади
-        deforestation_area = 0
-        for i in range(0, 800, 40):
-            for j in range(0, 800, 40):
-                if np.random.random() < 0.7:  # 70% вырубка
-                    # Коричневая земля после вырубки
-                    cv2.rectangle(img_after, (i, j), (i + 40, j + 40),
-                                  (80, 50, 20), -1)
-
-                    # Остатки деревьев (пни)
-                    if np.random.random() < 0.3:  # 30% пней
-                        cv2.circle(img_after, (i + 20, j + 20), 5, (60, 40, 10), -1)
-
-                    deforestation_area += 40 * 40
-
-        cv2.imwrite(test_after, img_after)
-
-        total_area = 800 * 800
-        deforestation_percent = (deforestation_area / total_area) * 100
-        print(f"   Создано: {test_after}")
-        print(f"   Реальная вырубка: {deforestation_percent:.1f}%")
-
-    print(f"\n🔍 ЗАПУСК АНАЛИЗА...")
-    print(f"   До: {test_before}")
-    print(f"   После: {test_after}")
-
-    # Тестируем с разной чувствительностью
-    for sensitivity in [1.0, 1.5, 2.0]:
-        print(f"\n{'=' * 70}")
-        print(f"ЧУВСТВИТЕЛЬНОСТЬ: {sensitivity}")
-        print(f"{'=' * 70}")
-
-        results = detect_changes_super_aggressive(
-            test_before, test_after,
-            sensitivity=sensitivity
-        )
-
-        if results.get('success'):
-            print(f"\n✅ РЕЗУЛЬТАТЫ (sensitivity={sensitivity}):")
-            print(f"   Обнаружено: {results['final_percentage']:.1f}%")
-            print(f"   Тип: {results['change_type']}")
-            print(f"   Уровень: {results['change_level']}")
-
-            if results['final_percentage'] < 50:
-                print(f"   ⚠️  СЛИШКОМ МАЛО! Увеличивайте sensitivity до 2.5-3.0!")
-            elif results['final_percentage'] > 80:
-                print(f"   ✅ ОТЛИЧНО! Обнаружена масштабная вырубка!")

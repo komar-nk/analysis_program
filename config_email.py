@@ -9,17 +9,13 @@ load_dotenv()
 
 
 class EmailConfig:
-    """Конфигурация для email уведомлений"""
-
     def __init__(self):
-        # Загружаем настройки из .env или запрашиваем у пользователя
-        if os.path.exists('../satellite_monitor/.env'):
+        if os.path.exists('.env'):
             self._load_from_env()
         else:
             self._get_settings_from_user()
 
     def _load_from_env(self):
-        """Загрузка настроек из файла .env"""
         self.EMAIL_ENABLED = os.getenv('EMAIL_ENABLED', 'False').lower() == 'true'
 
         if not self.EMAIL_ENABLED:
@@ -42,12 +38,10 @@ class EmailConfig:
             self.EMAIL_ENABLED = False
 
     def _get_settings_from_user(self):
-        """Получение настроек от пользователя"""
         print("\n" + "=" * 60)
         print("НАСТРОЙКА EMAIL УВЕДОМЛЕНИЙ")
         print("=" * 60)
 
-        # Включить уведомления?
         enable = input("\nВключить email уведомления при значительных изменениях? (y/n): ").lower().strip()
         self.EMAIL_ENABLED = (enable == 'y')
 
@@ -55,7 +49,6 @@ class EmailConfig:
             print("Уведомления отключены.")
             return
 
-        # Выбор почтового сервиса
         print("\nВыберите почтовый сервис:")
         print("1. Gmail (рекомендуется)")
         print("2. Яндекс.Почта")
@@ -67,19 +60,11 @@ class EmailConfig:
         if choice == '1':
             self.SMTP_SERVER = "smtp.gmail.com"
             self.SMTP_PORT = 587
-            print("\nВНИМАНИЕ для Gmail:")
-            print("   Используйте пароль приложения, а не обычный пароль!")
-            print("   Как получить пароль приложения:")
-            print("   1. Войдите в Google Аккаунт")
-            print("   2. Настройки → Безопасность → Двухэтапная аутентификация")
-            print("   3. Пароли приложений → Создать пароль")
-            print("   4. Выберите 'Почта' и 'Другое (укажите имя)'")
-            print("   5. Используйте этот пароль в программе")
+            print("\nДля Gmail используйте пароль приложения")
         elif choice == '2':
             self.SMTP_SERVER = "smtp.yandex.ru"
             self.SMTP_PORT = 587
-            print("\nДля Яндекс:")
-            print("   Используйте пароль приложения из Яндекс ID")
+            print("\nДля Яндекс используйте пароль приложения из Яндекс ID")
         elif choice == '3':
             self.SMTP_SERVER = "smtp.mail.ru"
             self.SMTP_PORT = 587
@@ -88,45 +73,33 @@ class EmailConfig:
             port = input("SMTP порт (обычно 587): ").strip()
             self.SMTP_PORT = int(port) if port else 587
 
-        # Данные для входа
         print("\nВведите данные для отправки писем:")
         self.EMAIL_FROM = input("Email отправителя: ").strip()
         self.EMAIL_PASSWORD = input("Пароль (для Gmail - пароль приложения): ").strip()
         self.EMAIL_TO = input("Email получателя (куда отправлять уведомления): ").strip()
 
-        # Порог для уведомлений
         print("\nНастройка порога изменений:")
         print("   При изменениях выше этого порога будут отправляться уведомления")
         threshold = input("Порог изменений в % (рекомендуется 5-15): ").strip()
         self.CHANGE_THRESHOLD = float(threshold) if threshold else 10.0
 
-        # Тестируем подключение
         print("\nТестируем подключение к почте...")
         if self.test_connection():
             print("Подключение успешно!")
 
-            # Отправляем тестовое письмо
             print("\nОтправляем тестовое письмо...")
             if self.send_test_email():
                 print("Тестовое письмо отправлено успешно!")
 
-            # Сохраняем настройки
             save = input("\nСохранить настройки в файл .env? (y/n): ").lower().strip()
             if save == 'y':
                 self.save_to_env()
                 print("Настройки сохранены в файл .env")
-                print("   При следующем запуске они загрузятся автоматически")
         else:
             print("Подключение не удалось, но настройки сохранены в памяти.")
-            print("Проверьте данные и настройте заново через меню.")
 
     def test_connection(self):
-        """Тест подключения к SMTP"""
         try:
-            print(f"   Сервер: {self.SMTP_SERVER}:{self.SMTP_PORT}")
-            print(f"   От: {self.EMAIL_FROM}")
-            print(f"   Кому: {self.EMAIL_TO}")
-
             server = smtplib.SMTP(self.SMTP_SERVER, self.SMTP_PORT, timeout=10)
             server.starttls()
             server.login(self.EMAIL_FROM, self.EMAIL_PASSWORD)
@@ -135,15 +108,9 @@ class EmailConfig:
 
         except Exception as e:
             print(f"Ошибка подключения: {e}")
-            print("\nСоветы по устранению:")
-            print("1. Проверьте логин и пароль")
-            print("2. Для Gmail используйте пароль приложения")
-            print("3. Разрешите доступ ненадежным приложениям (если нужно)")
-            print("4. Проверьте настройки двухфакторной аутентификации")
             return False
 
     def send_test_email(self):
-        """Отправка тестового письма"""
         try:
             msg = MIMEMultipart('alternative')
             msg['Subject'] = "Тест: Система мониторинга настроена"
@@ -198,10 +165,9 @@ class EmailConfig:
             return False
 
     def save_to_env(self):
-        """Сохранение настроек в .env файл"""
         import os
-        os.makedirs('../satellite_monitor', exist_ok=True)
-        with open('../satellite_monitor/.env', 'w') as f:
+        os.makedirs('.', exist_ok=True)
+        with open('.env', 'w') as f:
             f.write(f"EMAIL_ENABLED={self.EMAIL_ENABLED}\n")
             f.write(f"SMTP_SERVER={self.SMTP_SERVER}\n")
             f.write(f"SMTP_PORT={self.SMTP_PORT}\n")
@@ -211,9 +177,6 @@ class EmailConfig:
             f.write(f"CHANGE_THRESHOLD={self.CHANGE_THRESHOLD}\n")
         print("Настройки сохранены в файл .env")
 
-
-# Функция для быстрой инициализации
 def setup_email_notifications():
-    """Настройка email уведомлений"""
     config = EmailConfig()
     return config

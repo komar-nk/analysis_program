@@ -1,3 +1,4 @@
+
 """
 Клиент для работы с Google Earth Engine
 """
@@ -88,7 +89,7 @@ class GEEClient:
         """Инициализация Google Earth Engine"""
         try:
             print("\n" + "=" * 60)
-            print("ИНИЦИАЛИЗАЦИИ GOOGLE EARTH ENGINE")
+            print("ИНИЦИАЛИЗАЦИЯ GOOGLE EARTH ENGINE")
             print("=" * 60)
 
             # Твой ID проекта
@@ -269,7 +270,7 @@ class GEEClient:
         try:
             # Оптимальный размер для детекции изменений
             if image_size > 2048:
-                image_size = 2048  # Максимум без ошибок
+                image_size = 2048
 
             if date is None:
                 actual_date = datetime.now().strftime('%Y-%m-%d')
@@ -329,7 +330,6 @@ class GEEClient:
             print(f"Найдено изображение от: {image_date}")
             print(f"Облачность изображения: {cloud_cover}%")
 
-            # Определяем область интереса (1.5x1.5 км - меньше область, больше деталей!)
             region = point.buffer(750).bounds()  # 750 метров = 1.5x1.5 км
 
             print("Получаем URL для скачивания...")
@@ -343,7 +343,7 @@ class GEEClient:
                 'dimensions': f'{image_size}x{image_size}',
                 'format': 'png',
                 'bands': ['B4', 'B3', 'B2'],  # True Color (RGB)
-                'min': 500,  # Увеличил для лучшего контраста
+                'min': 500,  # Увеличение для лучшего контраста
                 'max': 3000,  # Оптимально для Sentinel-2
                 'gamma': 1.0  # Нейтральная гамма
             })
@@ -365,7 +365,6 @@ class GEEClient:
             with open(filepath, 'wb') as f:
                 f.write(response.content)
 
-            # УЛУЧШАЕМ ИЗОБРАЖЕНИЕ для детекции
             print("Улучшаем изображение для детекции изменений...")
             self._enhance_image(str(filepath))
 
@@ -444,12 +443,12 @@ class GEEClient:
             cloud_pixels = self.cv2.countNonZero(bright_mask)
             cloud_percentage = (cloud_pixels / (width * height)) * 100
 
-            # Оценка резкости (важно для детекции!)
+            # Оценка резкости
             edges = self.cv2.Canny(gray, 100, 200)
             edge_pixels = self.cv2.countNonZero(edges)
             edge_percentage = (edge_pixels / (width * height)) * 100
 
-            # Контрастность (важно для детекции!)
+            # Контрастность
             contrast = max_val - min_val
 
             # Определяем оценку
@@ -524,11 +523,11 @@ class GEEClient:
                 else:
                     seasonal_reason += f"Сильное уменьшение растительности (x{green_ratio:.2f}). "
 
-            # Анализ общего цвета (HSV)
+            # Анализ общего цвета
             hsv1 = self.cv2.cvtColor(img1, self.cv2.COLOR_BGR2HSV)
             hsv2 = self.cv2.cvtColor(img2, self.cv2.COLOR_BGR2HSV)
 
-            # Разница в насыщенности (S канал)
+            # Разница в насыщенности
             saturation_diff = abs(hsv1[:, :, 1].mean() - hsv2[:, :, 1].mean())
             if saturation_diff > 20:
                 is_seasonal = True
@@ -559,7 +558,7 @@ class GEEClient:
 
     def _compare_normal_changes(self, img1, img2, w, h):
         """УЛУЧШЕННОЕ сравнение для НЕ сезонных снимков с фокусом на землю"""
-        print("🔍 Улучшенное сравнение (фокус на земляные изменения)...")
+        print("Улучшенное сравнение (фокус на земляные изменения)...")
 
         # Функции для препроцессинга
         def preprocess_for_earth(image):
@@ -643,7 +642,7 @@ class GEEClient:
         # Вычисляем разницу
         diff = self.cv2.absdiff(gray1_blur, gray2_blur)
 
-        # ПОНИЖЕННЫЙ ПОРОГ для лучшей детекции земляных изменений
+        # Пониженный порог для лучшей детекции земляных изменений
         # (вскопанная земля может давать не очень контрастную разницу)
         _, thresh = self.cv2.threshold(diff, 15, 255, self.cv2.THRESH_BINARY)
 
@@ -663,7 +662,7 @@ class GEEClient:
         contours, _ = self.cv2.findContours(thresh, self.cv2.RETR_EXTERNAL,
                                             self.cv2.CHAIN_APPROX_SIMPLE)
 
-        # Фильтруем контуры по площади (ищем только КРУПНЫЕ изменения)
+        # Фильтруем контуры по площади
         min_area = (w * h) * 0.0002  # 0.02% от площади (для земляных работ обычно крупные)
         large_mask = np.zeros_like(thresh)
         large_contours = []
@@ -694,7 +693,7 @@ class GEEClient:
 
     def _compare_seasonal_changes(self, img1, img2, w, h, seasonal_data):
         """Сравнение для СЕЗОННЫХ снимков (ищет только структурные изменения)"""
-        print("🔍 Сравнение сезонных снимков (только структуры)...")
+        print("Сравнение сезонных снимков (только структуры)...")
 
         # Конвертируем в grayscale
         gray1 = self.cv2.cvtColor(img1, self.cv2.COLOR_BGR2GRAY)
@@ -705,7 +704,7 @@ class GEEClient:
             alpha = seasonal_data['mean_brightness1'] / seasonal_data['mean_brightness2']
             gray2 = self.cv2.convertScaleAbs(gray2, alpha=alpha, beta=0)
 
-        # СИЛЬНОЕ размытие (оставляем только крупные структуры)
+        # Сильное размытие (оставляем только крупные структуры)
         gray1_blur = self.cv2.GaussianBlur(gray1, (15, 15), 5.0)
         gray2_blur = self.cv2.GaussianBlur(gray2, (15, 15), 5.0)
 
@@ -717,8 +716,8 @@ class GEEClient:
         contours, _ = self.cv2.findContours(thresh, self.cv2.RETR_EXTERNAL,
                                             self.cv2.CHAIN_APPROX_SIMPLE)
 
-        # Только КРУПНЫЕ контуры (>2% площади)
-        min_area = (w * h) * 0.02  # 2% от площади!
+
+        min_area = (w * h) * 0.02
 
         structural_changes = []
         structural_mask = np.zeros_like(thresh)
@@ -750,7 +749,7 @@ class GEEClient:
             start_time = time.time()
 
             print(f"\n{'=' * 60}")
-            print("🔍 СРАВНЕНИЕ ИЗОБРАЖЕНИЙ С ФИЛЬТРОМ СЕЗОННОСТИ")
+            print("СРАВНЕНИЕ ИЗОБРАЖЕНИЙ С ФИЛЬТРОМ СЕЗОННОСТИ")
             print(f"{'=' * 60}")
 
             # Загружаем изображения
@@ -768,7 +767,7 @@ class GEEClient:
 
             print(f"Размер изображений: {w}x{h} пикселей")
 
-            # ШАГ 1: Проверка сезонности
+            # Проверка сезонности
             print("\n1. Анализ сезонности...")
             seasonal_data = self._detect_seasonal_changes(img1, img2)
 
@@ -779,10 +778,10 @@ class GEEClient:
             is_seasonal = seasonal_data['is_seasonal']
 
             if is_seasonal:
-                print(f"   ️  ПРИЧИНА: {seasonal_data['seasonal_reason']}")
+                print(f"   ПРИЧИНА: {seasonal_data['seasonal_reason']}")
                 print(f"    Будет использоваться структурный алгоритм")
 
-            # ШАГ 2: Выбор алгоритма сравнения
+            # Выбор алгоритма сравнения
             if is_seasonal:
                 # Для сезонных снимков используем структурный алгоритм
                 change_percentage, contours, changed_pixels = self._compare_seasonal_changes(
@@ -798,13 +797,13 @@ class GEEClient:
 
             total_pixels = w * h
 
-            print(f"\n📊 РЕЗУЛЬТАТЫ ({algorithm_type}):")
+            print(f"\nРЕЗУЛЬТАТЫ ({algorithm_type}):")
             print(f"   Контуров найдено: {len(contours)}")
             print(f"   Измененные пиксели: {changed_pixels:,}")
             print(f"   Всего пикселей: {total_pixels:,}")
             print(f"   Процент изменений: {change_percentage:.2f}%")
 
-            # ШАГ 3: Определение уровня изменений
+            # Определение уровня изменений
             if is_seasonal:
                 # Для сезонных снимков - другие пороги
                 if change_percentage < 0.3:
@@ -846,7 +845,7 @@ class GEEClient:
                     change_level = 'катастрофические'
                     significance = 'Катастрофические изменения'
 
-            # ШАГ 4: Визуализация
+            # Визуализация
             timestamp = int(time.time())
             visualization_path = f"changes_visualization_{timestamp}.jpg"
 
@@ -873,12 +872,12 @@ class GEEClient:
 
             # Сохраняем
             self.cv2.imwrite(visualization_path, result_img)
-            print(f"📸 Визуализация сохранена: {visualization_path}")
+            print(f"Визуализация сохранена: {visualization_path}")
 
             elapsed_time = time.time() - start_time
 
             print(f"\n{'=' * 60}")
-            print("✅ ФИНАЛЬНЫЙ РЕЗУЛЬТАТ:")
+            print("ФИНАЛЬНЫЙ РЕЗУЛЬТАТ:")
             print(f"{'=' * 60}")
             print(f"Изменения: {change_percentage:.4f}% ({change_level})")
             print(f"Сезонные: {'Да' if is_seasonal else 'Нет'}")
@@ -905,7 +904,7 @@ class GEEClient:
             }
 
         except Exception as comparison_error:
-            print(f" Ошибка сравнения: {str(comparison_error)}")
+            print(f"Ошибка сравнения: {str(comparison_error)}")
             import traceback
             traceback.print_exc()
             return {'error': f'Ошибка сравнения: {str(comparison_error)}'}
@@ -952,7 +951,7 @@ class GEEClient:
     def debug_seasonal_analysis(self, image_path1: str, image_path2: str):
         """Отладка сезонного анализа"""
         print(f"\n{'=' * 60}")
-        print("🔬 ОТЛАДКА СЕЗОННОГО АНАЛИЗА")
+        print("ОТЛАДКА СЕЗОННОГО АНАЛИЗА")
         print(f"{'=' * 60}")
 
         img1 = self.cv2.imread(image_path1)
@@ -967,10 +966,8 @@ class GEEClient:
         hsv2 = self.cv2.cvtColor(img2, self.cv2.COLOR_BGR2HSV)
 
         print(f"\nЦВЕТОВОЙ АНАЛИЗ:")
-        print(
-            f"  Изображение 1 - H: {hsv1[:, :, 0].mean():.1f}, S: {hsv1[:, :, 1].mean():.1f}, V: {hsv1[:, :, 2].mean():.1f}")
-        print(
-            f"  Изображение 2 - H: {hsv2[:, :, 0].mean():.1f}, S: {hsv2[:, :, 1].mean():.1f}, V: {hsv2[:, :, 2].mean():.1f}")
+        print(f"  Изображение 1 - H: {hsv1[:, :, 0].mean():.1f}, S: {hsv1[:, :, 1].mean():.1f}, V: {hsv1[:, :, 2].mean():.1f}")
+        print(f"  Изображение 2 - H: {hsv2[:, :, 0].mean():.1f}, S: {hsv2[:, :, 1].mean():.1f}, V: {hsv2[:, :, 2].mean():.1f}")
 
         # Анализ каналов
         print(f"\nКАНАЛЫ RGB:")
@@ -1006,68 +1003,3 @@ class GEEClient:
 
         seasonal_data = self._detect_seasonal_changes(img1, img2)
         print(f"\nИТОГ: Сезонные изменения - {'Да' if seasonal_data['is_seasonal'] else 'Нет'}")
-
-
-# Тестовый запуск
-if __name__ == "__main__":
-    print("Тестирование GEE клиента с фильтром сезонности...")
-    print(f"Проект: careful-journey-480220-j1")
-
-    try:
-        client = GEEClient()
-        print("\n✅ Клиент создан успешно!")
-
-        print("\nТест 1: Проверка сезонного анализа...")
-        # Тестовые изображения
-        test_image1 = "test_winter.jpg"  # зимний снимок
-        test_image2 = "test_summer.jpg"  # летний снимок
-
-        # Если тестовых файлов нет, создаем
-        if not os.path.exists(test_image1) or not os.path.exists(test_image2):
-            print("Создаю тестовые изображения...")
-            import numpy as np
-
-            # Зимнее изображение (снег, голые деревья)
-            winter_img = np.zeros((300, 400, 3), dtype=np.uint8)
-            winter_img[:, :] = [200, 220, 240]  # сине-белый
-            cv2.rectangle(winter_img, (100, 100), (200, 200), [150, 150, 150], -1)  # здание
-
-            # Летнее изображение (трава, зелень)
-            summer_img = np.zeros((300, 400, 3), dtype=np.uint8)
-            summer_img[:, :] = [50, 150, 50]  # зеленый
-            cv2.rectangle(summer_img, (100, 100), (200, 200), [150, 150, 150], -1)  # то же здание
-
-            cv2.imwrite(test_image1, winter_img)
-            cv2.imwrite(test_image2, summer_img)
-            print(f"Тестовые изображения созданы: {test_image1}, {test_image2}")
-
-        # Анализ сезонности
-        client.debug_seasonal_analysis(test_image1, test_image2)
-
-        # Сравнение
-        result = client.compare_images_advanced(test_image1, test_image2)
-
-        if 'error' not in result:
-            print(f"\n📊 РЕЗУЛЬТАТ СРАВНЕНИЯ:")
-            print(f"   Изменения: {result['change_percentage']:.2f}%")
-            print(f"   Уровень: {result['change_level']}")
-            print(f"   Сезонные: {'Да' if result['is_seasonal'] else 'Нет'}")
-            print(f"   Контуров: {result['contours_count']}")
-
-            if result['is_seasonal']:
-                print(f"    ВЕРНО: Обнаружены сезонные изменения")
-                print(f"    Структурные изменения: {result['change_percentage']:.2f}% (должно быть мало)")
-            else:
-                print(f"    ОШИБКА: Не обнаружены сезонные изменения (должны быть!)")
-
-        # Очистка тестовых файлов
-        if os.path.exists(test_image1):
-            os.remove(test_image1)
-        if os.path.exists(test_image2):
-            os.remove(test_image2)
-
-    except Exception as e:
-        print(f" Ошибка: {e}")
-        import traceback
-
-        traceback.print_exc()

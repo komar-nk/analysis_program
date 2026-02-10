@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>КОСМОС МОНИТОРИНГ | Space Intelligence</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .stars-container {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            overflow: hidden;
+            background: #000000;
+        }
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.6;
+            animation: twinkle 3s infinite alternate;
+        }
+
+        @keyframes twinkle {
+            0% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+
+        /* Анимации для уведомлений */
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+
+        /* ИСПРАВЛЕННАЯ ГЕРОЙ-СЕКЦИЯ */
+        .hero-section {
+            min-height: 80vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 60px 20px;
+            position: relative;
+        }
+
+        .hero-content {
+            max-width: 900px;
+            width: 100%;
+            z-index: 2;
+        }
+
+        .hero-logo {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(3rem, 8vw, 5.5rem);
+            font-weight: 700;
+            line-height: 1.1;
+            color: #ffffff;
+            margin-bottom: 30px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            background: linear-gradient(45deg, #4a9eff, #3a86ff, #6a5af9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: clamp(1.2rem, 2.5vw, 1.8rem);
+            color: #a0aec0;
+            margin-bottom: 50px;
+            line-height: 1.6;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            font-weight: 300;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-hero {
+            padding: 18px 45px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            border-radius: 12px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            box-shadow: 0 10px 30px rgba(74, 158, 255, 0.3);
+        }
+
+        .btn-hero:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 20px 40px rgba(74, 158, 255, 0.4);
+        }
+
+        /* Декоративные элементы */
+        .hero-decoration {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .hero-orb {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle at center, rgba(74, 158, 255, 0.15) 0%, transparent 70%);
+            filter: blur(40px);
+        }
+
+        .hero-orb-1 {
+            width: 400px;
+            height: 400px;
+            top: 20%;
+            right: 10%;
+            animation: float 8s ease-in-out infinite;
+        }
+
+        .hero-orb-2 {
+            width: 300px;
+            height: 300px;
+            bottom: 10%;
+            left: 10%;
+            animation: float 10s ease-in-out infinite reverse;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-20px) scale(1.05); }
+        }
+
+        /* Секция "Как это работает" - УЛУЧШЕННАЯ */
+        .how-it-works {
+            padding: 100px 20px;
+            background: rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+
+        .section-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(2rem, 4vw, 3.5rem);
+            text-align: center;
+            margin-bottom: 30px;
+            color: var(--accent-blue);
+            position: relative;
+            display: inline-block;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--accent-blue), transparent);
+        }
+
+        .section-subtitle {
+            text-align: center;
+            font-size: clamp(1.1rem, 2vw, 1.4rem);
+            color: #a0aec0;
+            margin-bottom: 80px;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.6;
+        }
+
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .step {
+            background: linear-gradient(145deg, rgba(20, 20, 30, 0.9), rgba(10, 10, 20, 0.9));
+            padding: 40px 30px;
+            border-radius: 20px;
+            text-align: center;
+            border: 1px solid rgba(74, 158, 255, 0.2);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .step::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(74, 158, 255, 0.1), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+        }
+
+        .step:hover::before {
+            transform: translateX(100%);
+        }
+
+        .step:hover {
+            transform: translateY(-15px);
+            border-color: var(--accent-blue);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+        }
+
+        .step-number {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--accent-blue), #3a86ff);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: 1.8rem;
+            color: white;
+            margin: 0 auto 25px;
+            box-shadow: 0 10px 20px rgba(74, 158, 255, 0.3);
+            position: relative;
+            z-index: 2;
+        }
+
+        .step h3 {
+            font-size: 1.6rem;
+            margin-bottom: 20px;
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .step p {
+            color: #a0aec0;
+            line-height: 1.7;
+            font-size: 1rem;
+        }
+
+        /* Отзывчивость */
+        @media (max-width: 768px) {
+            .hero-section {
+                min-height: 70vh;
+                padding: 40px 15px;
+            }
+
+            .hero-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn-hero {
+                width: 100%;
+                max-width: 300px;
+                justify-content: center;
+            }
+
+            .steps {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+
+            .step {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Звездный фон -->
+    <div class="stars-container" id="stars"></div>
+
+    <!-- Шапка сайта -->
+    <header>
+        <div class="header-logo">
+            <i class="fas fa-satellite"></i>
+            КОСМОС МОНИТОРИНГ
+        </div>
+        <div class="header-actions">
+            <nav class="nav-menu">
+                <a href="index.html" class="active"><i class="fas fa-home"></i> Главная</a>
+                <a href="search.html"><i class="fas fa-search"></i> Поиск</a>
+                <a href="territories.html"><i class="fas fa-map-marked-alt"></i> Мои территории</a>
+                <a href="analysis.html"><i class="fas fa-chart-line"></i> Анализ</a>
+                <a href="cabinet.html"><i class="fas fa-user"></i> Личный кабинет</a>
+            </nav>
+            <div class="user-section">
+                <span class="user-info" id="userInfo"></span>
+                <button class="btn btn-outline btn-small" id="authBtn">Войти</button>
+            </div>
+            <div class="mobile-menu-btn">
+                <i class="fas fa-bars"></i>
+            </div>
+        </div>
+    </header>
+
+    <!-- Модальное окно авторизации -->
+    <div class="auth-modal" id="authModal">
+        <div class="auth-container">
+            <button class="auth-close" id="closeAuth">&times;</button>
+            <div id="loginForm">
+                <h2 class="auth-title">Вход</h2>
+                <p class="auth-subtitle">Продолжите мониторинг территорий</p>
+                <form id="loginFormElement">
+                    <div class="form-group">
+                        <label>Логин</label>
+                        <input type="text" id="loginUsername" required placeholder="Введите ваш логин">
+                    </div>
+                    <div class="form-group">
+                        <label>Пароль</label>
+                        <input type="password" id="loginPassword" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">Войти</button>
+                </form>
+                <div class="auth-switch">
+                    Нет аккаунта? <a href="#" id="switchToRegister">Зарегистрироваться</a>
+                </div>
+            </div>
+
+            <div id="registerForm" style="display: none;">
+                <h2 class="auth-title">Регистрация</h2>
+                <p class="auth-subtitle">Начните мониторить территории уже сегодня</p>
+                <form id="registerFormElement">
+                    <div class="form-group">
+                        <label>Логин</label>
+                        <input type="text" id="registerUsername" required placeholder="Придумайте логин">
+                    </div>
+                    <div class="form-group">
+                        <label>Пароль</label>
+                        <input type="password" id="registerPassword" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Подтверждение пароля</label>
+                        <input type="password" id="registerPasswordConfirm" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">Создать аккаунт</button>
+                </form>
+                <div class="auth-switch">
+                    Уже есть аккаунт? <a href="#" id="switchToLogin">Войти</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <main>
+        <!-- Герой-секция - ИСПРАВЛЕННАЯ -->
+        <section class="hero-section">
+            <div class="hero-decoration">
+                <div class="hero-orb hero-orb-1"></div>
+                <div class="hero-orb hero-orb-2"></div>
+            </div>
+
+            <div class="hero-content">
+                <h1 class="hero-logo">КОСМОС МОНИТОРИНГ</h1>
+                <p class="hero-subtitle">
+                    Автоматический мониторинг изменений на ваших территориях<br>
+                    с использованием спутниковых данных и AI-анализа
+                </p>
+                <div class="hero-buttons">
+                    <a href="search.html" class="btn btn-hero btn-primary">
+                        <i class="fas fa-rocket"></i> Начать мониторинг
+                    </a>
+                    <a href="#how-it-works" class="btn btn-hero btn-outline">
+                        <i class="fas fa-play-circle"></i> Как это работает
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Секция "Как это работает" -->
+        <section id="how-it-works" class="how-it-works">
+            <h2 class="section-title">Мониторинг территории в один клик</h2>
+            <p class="section-subtitle">
+                Система автоматического отслеживания изменений на ваших территориях<br>
+                с использованием спутниковых данных и нейросетей
+            </p>
+
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h3>Выберите точку</h3>
+                    <p>Укажите место на карте, введите координаты или адрес. Выберите только одну точку для мониторинга.</p>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h3>Запустите мониторинг</h3>
+                    <p>Нажмите кнопку "Начать мониторинг". Система будет ежедневно отслеживать изменения в выбранной точке.</p>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h3>Получайте аналитику</h3>
+                    <p>Ежедневный анализ спутниковых снимков с AI-детекцией. Мгновенные уведомления о любых изменениях.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>© 2026 Космос Мониторинг | Система интеллектуального анализа территорий</footer>
+
+    <script src="script.js"></script>
+    <script>
+        // Специфичная инициализация для главной страницы
+        function pageSpecificInit() {
+            console.log('Инициализация главной страницы');
+
+            // Плавная прокрутка к секции "Как это работает"
+            const learnMoreBtn = document.querySelector('a[href="#how-it-works"]');
+            if (learnMoreBtn) {
+                learnMoreBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const section = document.getElementById('how-it-works');
+                    if (section) {
+                        section.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            }
+        }
+
+        // Если DOM уже загружен, запускаем инициализацию
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                pageSpecificInit();
+            });
+        } else {
+            pageSpecificInit();
+        }
+    </script>
+</body>
+</html>

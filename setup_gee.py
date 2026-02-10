@@ -15,12 +15,12 @@ try:
     print("\n2. Инициализирую Google Earth Engine...")
     ee.Initialize()
 
-    print("\n✅ НАСТРОЙКА УСПЕШНА!")
+    print("\n НАСТРОЙКА УСПЕШНА!")
     print("\nТеперь можно запускать основную программу:")
     print("python main.py")
 
 except Exception as e:
-    print(f"\n❌ Ошибка: {str(e)}")
+    print(f"\n Ошибка: {str(e)}")
     print("\nРешения:")
     print("1. Убедитесь, что есть Google аккаунт")
     print("2. Включите интернет")

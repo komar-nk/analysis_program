@@ -1,3 +1,4 @@
+
 """
 Автоматический мониторинг территорий
 """
@@ -66,7 +67,7 @@ def monitor_territory(territory, db, gee, detector):
 
 
 def daily_monitoring():
-    """Ежедневный мониторинг"""
+    """Ежедневный мониторинг всех территорий"""
     print(f"\n{'=' * 60}")
     print(f"АВТОМАТИЧЕСКИЙ МОНИТОРИНГ - {datetime.now().strftime('%Y-%m-%d %H:%M')}")
     print(f"{'=' * 60}")
@@ -104,7 +105,7 @@ def daily_monitoring():
 
 
 def schedule_monitoring(hour=10, minute=0):
-    """Настройка регулярного мониторинга"""
+    """Настройка регулярного мониторинга по расписанию"""
     print(f"\nНастройка расписания...")
     print(f"   Ежедневно в {hour:02d}:{minute:02d}")
 
@@ -125,7 +126,7 @@ def schedule_monitoring(hour=10, minute=0):
 
 
 def main():
-    """Главная функция"""
+    """Главная функция запуска мониторинга"""
     print("\n" + "=" * 60)
     print("АВТОМАТИЧЕСКИЙ МОНИТОРИНГ ТЕРРИТОРИЙ")
     print("=" * 60)

@@ -1,4 +1,4 @@
-# setup_directories.py
+
 import os
 import shutil
 from pathlib import Path
@@ -45,10 +45,9 @@ def setup_directories():
             content = f.read()
 
         if "RESULTS_DIR" not in content:
-            # Добавляем настройку RESULTS_DIR
+            # Добавляем настройку
             new_line = 'RESULTS_DIR = BASE_DIR / "changes_results"\n'
             if 'CACHE_DIR = BASE_DIR / "satellite_images"' in content:
-                # Вставляем после CACHE_DIR
                 content = content.replace(
                     'CACHE_DIR = BASE_DIR / "satellite_images"',
                     'CACHE_DIR = BASE_DIR / "satellite_images"\nRESULTS_DIR = BASE_DIR / "changes_results"'
@@ -58,7 +57,7 @@ def setup_directories():
         with open(config_path, "w", encoding="utf-8") as f:
             f.write(content)
 
-    print("\n✅ Настройка завершена!")
+    print("\n Настройка завершена!")
     print("   Теперь все файлы изменений будут сохраняться в папке changes_results/")
 
 
